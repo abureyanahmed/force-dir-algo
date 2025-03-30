@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="data.js"></script>
+    <script src="output.js"></script>
+</head>
+<body>
+    <svg width="650" height="650"></svg>
+    <script>
+        const svg = d3.select("svg")
+        //var cx_arr = [252, 87+30, 200+87+30, 252]
+        //var cy_arr = [402, 243+30, 243+30, 220]
+        //var r_arr = [10, 10, 10, 10]
+        
+        const nodes = d3.range(node_ids.length).map(
+            //(d) => {return {id:d, x:Math.random()*500+20, y:Math.random()*500+20, r:Math.random()*200}}
+            (i) => {return {id:i, x:cx_arr[i], y:cy_arr[i], r:r_arr[i]}}
+            
+        )
+        //const edge_source = [0, 1, 2]
+        //const edge_target = [1, 2, 3]
+        var edges = []
+        for(var i=0;i<edge_source.length;i++){
+            var obj = {
+                'id': i,
+                'source':nodes[edge_source[i]], 
+                'target':nodes[edge_target[i]]
+            }
+            edges.push(obj)
+        }
+        console.log(edges)
+        console.log(d)
+
+        var g = svg.append("g");
+
+        g.selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        //.attr("r", "5")
+        .attr("r", d => d.r)
+        .style("fill", "red")
+        
+        g.selectAll("line")
+        .data(edges)
+        .enter()
+        .append("line")
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y)
+        //.attr("r", "5")
+        .attr("stroke", 'red')
+        .style("stroke-width", "2px")
+
+        
+
+        var width = parseInt(svg.attr("width"))
+        var height = parseInt(svg.attr("height"))
+        
+
+        
+
+        function centralize(){
+            var circles = document.getElementsByTagName("circle")
+            let x = []
+            let y = []
+            for(var i=0;i<circles.length;i++){
+                x.push(circles[i].__data__.x)
+                y.push(circles[i].__data__.y)
+            }
+            console.log(x, y)
+            let x_mm = d3.extent(x)
+            let y_mm = d3.extent(y)
+            let x_min = x_mm[0]
+            let x_max = x_mm[1]
+            let y_min = y_mm[0]
+            let y_max = y_mm[1]
+            let x_avg = (x_min+x_max)/2
+            let y_avg = (y_min+y_max)/2
+
+            let svg_w = parseInt(svg.attr("width"))
+            let svg_h = parseInt(svg.attr("height"))
+            let d_w = x_max - x_min
+            let d_h = y_max - y_min
+            console.log("svg", svg_w, svg_h, "layout", d_w, d_h)
+            console.log("translate("+(-x_min) + "," + (-y_min) + ") scale("+(svg_w/d_w) + ","+(svg_h/d_h) + ")")
+            //console.log(x_min, y_min, "translate("+(-x_min) + "," + (-y_min) + ")")
+            //g.attr("transform", "translate("+(-x_min) + "," + (-y_min) + ") scale("+(svg_w/d_w) + ","+(svg_h/d_h) + ")")// translate("+(svg_w/2) + "," + (svg_h/2) + ")")
+            for(var i=0;i<x.length;i++){
+                x[i] -= x_min
+                x[i] *= svg_w/Math.max(d_w,d_h)
+                y[i] -= y_min
+                y[i] *= svg_h/Math.max(d_w,d_h)
+            }
+            console.log(x, y)
+            //g.attr("transform", "scale("+(.05) + ")")
+            //d3.selectAll("circle").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+            //d3.selectAll("circle").attr("transform", "scale("+(.05) + "," + (.05) + ")")
+            //d3.selectAll("circle").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+            //d3.selectAll("line").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+
+            
+
+            svg.selectAll("circle")
+                .attr("cx", (d,i) => x[i])
+                .attr("cy", (d,i) => y[i])
+                //.attr("r", "5")
+                .attr("r", d => d.r)
+                .style("fill", "red")
+
+                svg.selectAll("line")
+                .attr("x1", d => x[d.source.id])
+                .attr("y1", d => y[d.source.id])
+                .attr("x2", d => x[d.target.id])
+                .attr("y2", d => y[d.target.id])
+                //.attr("r", "5")
+                .attr("stroke", 'red')
+                .style("stroke-width", "2px")
+        }
+
+        
+        //simulation.stop()
+        /*while(has_collision()){
+            simulation.alpha(1.0)
+            simulation.tick()
+        }*/
+
+
+        /*function myTick(){
+            simulation.tick()
+            console.log("Simulation alpha:", simulation.alpha());
+        }
+
+        setInterval(myTick, 250);*/
+        /*for(var i=0;i<100;i++){
+            //simulation.alpha(1.0)
+            console.log("iteration", i)
+            simulation.tick()
+            //console.log("Simulation alpha:", simulation.alpha());
+            
+        }*/
+
+        /*simulation.stop()
+        
+        svg.selectAll("circle")
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y)
+                //.attr("r", "5")
+                .attr("r", d => d.r)
+                .style("fill", "red")
+        
+        setTimeout(function(){
+
+            simulation.alpha(1.0).restart()
+            while(has_collision()){
+                simulation.alpha(1.0)
+                simulation.tick()
+            }
+            simulation.stop()
+            
+            svg.selectAll("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    //.attr("r", "5")
+                    .attr("r", d => d.r)
+                    .style("fill", "red")
+
+        }, 1000)*/
+
+        /*let count = 0;
+
+        // Function to manually tick the simulation with a delay
+        function runSimulationWithDelay() {
+            console.log("Running simulation tick", count);
+
+            simulation.tick();  // Perform a single step of the simulation
+
+            // Update the positions of the nodes in the visualization
+            svg.selectAll("circle")
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y)
+                .attr("r", d => d.r)
+                .style("fill", "red");
+
+            count++;
+
+            // Stop after 100 ticks
+            if (count < 100) {
+                // Call the next tick after a 16ms delay (roughly 60fps)
+                setTimeout(runSimulationWithDelay, 16);  // 16ms ~ 60fps
+            } else {
+                console.log("Simulation stopped after 100 ticks");
+            }
+        }
+
+        // Start the simulation with a controlled delay
+        runSimulationWithDelay();
+        simulation.stop()*/
+
+        
+
+        //simulation.alpha(1.0).restart()
+
+        //console.log(nodes)
+        //console.log(svg.selectAll("circle"))
+    </script>
+</body>
+</html>
