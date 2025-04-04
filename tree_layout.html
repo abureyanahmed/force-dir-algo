@@ -1,0 +1,423 @@
+<!--
+1. Merge
+2. Unmerge
+3. Compress
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="graph.js"></script>
+    <script src="data.js"></script>
+</head>
+<body>
+    <svg width="650" height="650"></svg>
+    <button id="moveButton">Move SVG Elements</button>
+    <script>
+
+        var specificLine1 = null
+        var specificCircle3 = null
+        var sourceData = null
+        var targetData = null
+        
+        const svg = d3.select("svg")
+        //var cx_arr = [252, 87+30, 200+87+30, 252]
+        //var cy_arr = [402, 243+30, 243+30, 220]
+        //var r_arr = [10, 10, 10, 10]
+        var cx_arr = []
+        var cy_arr = []
+        var r_arr = []
+        for(var i=0;i<node_ids.length;i++){
+            cx_arr.push(Math.random()*10)
+            cy_arr.push(Math.random()*10)
+            r_arr.push(2)
+        }
+        cx_arr[0] = 20, cy_arr[0] = 0
+        cx_arr[1] = 15, cy_arr[1] = 1
+        cx_arr[2] = 25, cy_arr[2] = 1
+        for(var i=3;i<=12;i++){
+            cx_arr[i] = 8+i, cy_arr[i] = 2
+        }
+        for(var i=13;i<=22;i++){
+            cx_arr[i] = 25, cy_arr[i] = 2+i-13
+        }
+        const nodes = d3.range(node_ids.length).map(
+            //(d) => {return {id:d, x:Math.random()*500+20, y:Math.random()*500+20, r:Math.random()*200}}
+            (i) => {return {id:i, x:cx_arr[i], y:cy_arr[i], r:r_arr[i]}}
+            
+        )
+        //const edge_source = [0, 1, 2]
+        //const edge_target = [1, 2, 3]
+        var edges = []
+        for(var i=0;i<edge_source.length;i++){
+            var obj = {
+                'id': i,
+                'source':nodes[edge_source[i]], 
+                'target':nodes[edge_target[i]]
+            }
+            edges.push(obj)
+        }
+        console.log(edges)
+        console.log(d)
+
+        
+        // Example usage
+        const graph = new Graph();
+        d3.range(node_ids.length).map(
+            (i) => {return graph.addVertex(i);}
+        )
+        for(var i=0;i<edge_source.length;i++){
+            graph.addEdge(edge_source[i], edge_target[i]);
+        }
+        graph.displayGraph();
+
+        // Example usage
+        const root = new TreeNode(1);
+
+        for(var i=3;i<=12;i++){
+            const child1 = new TreeNode(i);
+            root.addChild(child1);
+        }
+
+        root.display();
+
+        var g = svg.append("g");
+
+        g.selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        //.attr("r", "5")
+        .attr("r", d => d.r)
+        .style("fill", "red")
+        
+        g.selectAll("line")
+        .data(edges)
+        .enter()
+        .append("line")
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y)
+        //.attr("r", "5")
+        .attr("stroke", 'red')
+        .style("stroke-width", "2px")
+
+        
+
+        function testForce(){
+            return function(){
+                for(var i=0;i<nodes.length;i++)
+                {
+                    for(var j=i+1;j<nodes.length;j++)
+                    {
+                        if(Math.sqrt((nodes[i].x-nodes[j].x)*(nodes[i].x-nodes[j].x) + (nodes[i].y-nodes[j].y)*(nodes[i].y-nodes[j].y))<(nodes[i].r+nodes[j].r))
+                        {
+                            console.log("collision!")
+                            nodes[j].vx = (nodes[j].x - nodes[i].x)*.01
+                            nodes[j].vy = (nodes[j].y - nodes[i].y)*.01
+                            //nodes[j].vx = (nodes[j].x - nodes[i].x)*100
+                            //nodes[j].vy = (nodes[j].y - nodes[i].y)*100
+                        }
+                        //else console.log("No collision.")
+                        //console.log("x", nodes[i].x, "y", nodes[i].y, "vx", nodes[i].vx, "vy", nodes[i].vy)
+                        //console.log("x", nodes[j].x, "y", nodes[j].y, "vx", nodes[j].vx, "vy", nodes[j].vy)
+                    }
+                }
+            }
+        }
+
+        function find_distance(nodes, i, j){
+            return Math.sqrt((nodes[i].x-nodes[j].x)*(nodes[i].x-nodes[j].x) + (nodes[i].y-nodes[j].y)*(nodes[i].y-nodes[j].y))
+        }
+
+        function forceStress(){
+            return function(){
+                //write the stress code here
+                for(var i=0;i<nodes.length;i++)
+                {
+                    var forceX = 0.0
+                    var forceY = 0.0
+                    for(var j=0;j<nodes.length;j++)
+                    {
+                        if(i!=j)
+                        {
+                            var dij = d[i][j]*200
+                            var wij = 1/(dij*dij)
+                            var xij = find_distance(nodes,i,j)
+                            forceX += -2*wij*(xij-dij)*(nodes[i].x-nodes[j].x)/xij
+                            forceY += -2*wij*(xij-dij)*(nodes[i].y-nodes[j].y)/xij
+                            console.log(i,j,xij,dij,forceX, forceY)
+                        }
+                    }
+                    nodes[i].vx = forceX*10000
+                    nodes[i].vy = forceY*10000
+                }
+            }
+        }
+
+        function has_collision(){
+            for(var i=0;i<nodes.length;i++)
+            {
+                for(var j=i+1;j<nodes.length;j++)
+                {
+                    if(Math.sqrt((nodes[i].x-nodes[j].x)*(nodes[i].x-nodes[j].x) + (nodes[i].y-nodes[j].y)*(nodes[i].y-nodes[j].y))<(nodes[i].r+nodes[j].r))
+                    {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        var width = parseInt(svg.attr("width"))
+        var height = parseInt(svg.attr("height"))
+        const simulation = d3.forceSimulation(nodes)
+        .force("links", d3.forceLink(edges).strength(0))
+        //.force("center", d3.forceCenter(width / 2, height / 2))
+        //.force("abc", d3.forceCollide(d => d.r))
+        //.force("test", testForce())
+        //.force("charge", d3.forceManyBody())
+        .force("stress", forceStress())
+
+        simulation.on("tick",
+            function()
+            {
+                console.log("ticked")
+
+                svg.selectAll("circle")
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y)
+                //.attr("r", "5")
+                .attr("r", d => d.r)
+                .style("fill", "red")
+
+                svg.selectAll("line")
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y)
+                //.attr("r", "5")
+                .attr("stroke", 'red')
+                .style("stroke-width", "2px")
+
+                
+                /*if(!has_collision()){
+                    simulation.stop()
+                }*/
+            }
+        )
+
+        function getBoundingBox() {
+            return g.node().getBBox();
+        }
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 5])
+            .on("zoom", function() {
+                g.attr("transform", d3.event.transform);
+            });
+
+        svg.call(zoom);
+
+        function fitToBounds() {
+            const bbox = getBoundingBox();
+
+            const scaleX = width / bbox.width;
+            const scaleY = height / bbox.height;
+
+            // Choose the smaller scale factor to maintain aspect ratio
+            const scale = Math.min(scaleX, scaleY);
+
+            const translateX = (width - bbox.width * scale) / 2 - bbox.x * scale;
+            const translateY = (height - bbox.height * scale) / 2 - bbox.y * scale;
+
+            // Apply the calculated transform (scaling and translation)
+            g.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+        }
+
+        function getData(x, y){
+
+            var lineElements = svg.selectAll('line')
+            console.log(lineElements)
+            specificLine1 = lineElements.nodes()[11]
+            var data1 = d3.select(specificLine1).datum();
+
+            var specificLine2 = lineElements.nodes()[10]
+            var data2 = d3.select(specificLine2).datum();
+
+            var circleElements = svg.selectAll('circle')
+
+            var specificCircle1 = circleElements.nodes()[data2.source.id]
+            sourceData = d3.select(specificCircle1).datum();
+            sourceData.x = x[sourceData.id]
+            sourceData.y = y[sourceData.id]
+
+            var specificCircle2 = circleElements.nodes()[data2.target.id]
+            specificCircle3 = circleElements.nodes()[12]
+            targetData = d3.select(specificCircle2).datum();
+            targetData.x = x[targetData.id]
+            targetData.y = y[targetData.id]
+        }
+
+        function centralize(){
+            var circles = document.getElementsByTagName("circle")
+            let x = []
+            let y = []
+            for(var i=0;i<circles.length;i++){
+                x.push(circles[i].__data__.x)
+                y.push(circles[i].__data__.y)
+            }
+            console.log(x, y)
+            let x_mm = d3.extent(x)
+            let y_mm = d3.extent(y)
+            let x_min = x_mm[0]
+            let x_max = x_mm[1]
+            let y_min = y_mm[0]
+            let y_max = y_mm[1]
+            let x_avg = (x_min+x_max)/2
+            let y_avg = (y_min+y_max)/2
+
+            let svg_w = parseInt(svg.attr("width"))
+            let svg_h = parseInt(svg.attr("height"))
+            let d_w = x_max - x_min
+            let d_h = y_max - y_min
+            console.log("svg", svg_w, svg_h, "layout", d_w, d_h)
+            console.log("translate("+(-x_min) + "," + (-y_min) + ") scale("+(svg_w/d_w) + ","+(svg_h/d_h) + ")")
+            //console.log(x_min, y_min, "translate("+(-x_min) + "," + (-y_min) + ")")
+            //g.attr("transform", "translate("+(-x_min) + "," + (-y_min) + ") scale("+(svg_w/d_w) + ","+(svg_h/d_h) + ")")// translate("+(svg_w/2) + "," + (svg_h/2) + ")")
+            for(var i=0;i<x.length;i++){
+                x[i] -= x_min
+                x[i] *= svg_w/Math.max(d_w,d_h)
+                y[i] -= y_min
+                y[i] *= svg_h/Math.max(d_w,d_h)
+            }
+            console.log(x, y)
+            //g.attr("transform", "scale("+(.05) + ")")
+            //d3.selectAll("circle").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+            //d3.selectAll("circle").attr("transform", "scale("+(.05) + "," + (.05) + ")")
+            //d3.selectAll("circle").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+            //d3.selectAll("line").attr("transform", "translate("+(-x_min) + "," + (-y_min) + ")")
+
+            
+
+            svg.selectAll("circle")
+                .attr("cx", (d,i) => x[i])
+                .attr("cy", (d,i) => y[i])
+                //.attr("r", "5")
+                .attr("r", d => d.r)
+                .style("fill", "red")
+
+                svg.selectAll("line")
+                .attr("x1", d => x[d.source.index])
+                .attr("y1", d => y[d.source.index])
+                .attr("x2", d => x[d.target.index])
+                .attr("y2", d => y[d.target.index])
+                //.attr("r", "5")
+                .attr("stroke", 'red')
+                .style("stroke-width", "2px")
+
+            getData(x, y)
+        }
+
+        function merge(subtree, lineSegment){
+            // implement
+        }
+
+        simulation.stop()
+        /*for(var i=0;i<100;i++)
+        {
+            simulation.alpha(1.0)
+            simulation.tick()
+        }*/
+        //simulation.stop()
+        /*while(has_collision()){
+            simulation.alpha(1.0)
+            simulation.tick()
+        }*/
+
+
+        /*function myTick(){
+            simulation.tick()
+            console.log("Simulation alpha:", simulation.alpha());
+        }
+
+        setInterval(myTick, 250);*/
+        /*for(var i=0;i<100;i++){
+            //simulation.alpha(1.0)
+            console.log("iteration", i)
+            simulation.tick()
+            //console.log("Simulation alpha:", simulation.alpha());
+            
+        }*/
+
+        /*simulation.stop()
+        
+        svg.selectAll("circle")
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y)
+                //.attr("r", "5")
+                .attr("r", d => d.r)
+                .style("fill", "red")
+        
+        setTimeout(function(){
+
+            simulation.alpha(1.0).restart()
+            while(has_collision()){
+                simulation.alpha(1.0)
+                simulation.tick()
+            }
+            simulation.stop()
+            
+            svg.selectAll("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    //.attr("r", "5")
+                    .attr("r", d => d.r)
+                    .style("fill", "red")
+
+        }, 1000)*/
+
+        /*let count = 0;
+
+        // Function to manually tick the simulation with a delay
+        function runSimulationWithDelay() {
+            console.log("Running simulation tick", count);
+
+            simulation.tick();  // Perform a single step of the simulation
+
+            // Update the positions of the nodes in the visualization
+            svg.selectAll("circle")
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y)
+                .attr("r", d => d.r)
+                .style("fill", "red");
+
+            count++;
+
+            // Stop after 100 ticks
+            if (count < 100) {
+                // Call the next tick after a 16ms delay (roughly 60fps)
+                setTimeout(runSimulationWithDelay, 16);  // 16ms ~ 60fps
+            } else {
+                console.log("Simulation stopped after 100 ticks");
+            }
+        }
+
+        // Start the simulation with a controlled delay
+        runSimulationWithDelay();
+        simulation.stop()*/
+
+        
+
+        //simulation.alpha(1.0).restart()
+
+        //console.log(nodes)
+        //console.log(svg.selectAll("circle"))
+    </script>
+</body>
+
+<script src="movements.js"></script>
+</html>
