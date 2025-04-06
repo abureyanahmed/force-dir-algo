@@ -73,8 +73,38 @@ function animateCircleMovement(circle, circleNewX, circleNewY) {
 
 
 
+function getData(x, y){
+
+    var lineElements = svg.selectAll('line')
+    //console.log('lineElements', lineElements, lineElements.nodes(), lineElements.nodes()[11])
+    specificLine1 = lineElements.nodes()[11]
+    var data1 = d3.select(specificLine1).datum();
+
+    var specificLine2 = lineElements.nodes()[10]
+    var data2 = d3.select(specificLine2).datum();
+
+    var circleElements = svg.selectAll('circle')
+
+    var specificCircle1 = circleElements.nodes()[data2.source.id]
+    sourceData = d3.select(specificCircle1).datum();
+    sourceData.x = x[sourceData.id]
+    sourceData.y = y[sourceData.id]
+
+    var specificCircle2 = circleElements.nodes()[data2.target.id]
+    specificCircle3 = circleElements.nodes()[12]
+    targetData = d3.select(specificCircle2).datum();
+    targetData.x = x[targetData.id]
+    targetData.y = y[targetData.id]
+}
+
+
+
 // Add click event listener to the button
 moveButton.addEventListener("click", () => {
+
+    var coordinates = centralize()
+    var x = coordinates.x, y = coordinates.y
+    getData(x, y)
 
     // Move the line to new position (e.g., new coordinates for x1, y1, x2, y2)
     animateLineMovement(specificLine1, sourceData.x, sourceData.y, targetData.x, targetData.y); // Move line to new position
