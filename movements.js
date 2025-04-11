@@ -1,12 +1,14 @@
 
 // Get the button and SVG elements
+const zoomButton = document.getElementById("centralizeButton");
 const moveButton = document.getElementById("moveButton");
 const line = document.querySelector("line");
 const circle = document.querySelector("circle");
 
 // Function to animate the movement of the line
 function animateLineMovement(line, newX1, newY1, newX2, newY2) {
-    const duration = 1000; // Animation duration in milliseconds
+    //const duration = 1000; // Animation duration in milliseconds
+    const duration = 5000;
     const startTime = performance.now();
 
     // Current positions of the line
@@ -44,7 +46,8 @@ function animateLineMovement(line, newX1, newY1, newX2, newY2) {
 
 // Function to animate the circle movement (for completeness)
 function animateCircleMovement(circle, circleNewX, circleNewY) {
-    const circleDuration = 1000;
+    //const circleDuration = 1000;
+    const circleDuration = 5000;
     console.log(circle)
     const circleStartX = parseFloat(circle.getAttribute('cx'));
     const circleStartY = parseFloat(circle.getAttribute('cy'));
@@ -77,24 +80,56 @@ function getData(x, y){
 
     var lineElements = svg.selectAll('line')
     //console.log('lineElements', lineElements, lineElements.nodes(), lineElements.nodes()[11])
-    specificLine1 = lineElements.nodes()[11]
-    var data1 = d3.select(specificLine1).datum();
+    //var specificLine1 = lineElements.nodes()[11]
+    var lines = []
+    for(var i=2;i<=5;i++){
+        lines.push(lineElements.nodes()[i])
+    }
+    for(var i=7;i<=11;i++){
+        lines.push(lineElements.nodes()[i])
+    }
+    //var data1 = d3.select(specificLine1).datum();
 
-    var specificLine2 = lineElements.nodes()[10]
+    var specificLine2 = lineElements.nodes()[6]
     var data2 = d3.select(specificLine2).datum();
 
     var circleElements = svg.selectAll('circle')
 
     var specificCircle1 = circleElements.nodes()[data2.source.id]
-    sourceData = d3.select(specificCircle1).datum();
+    /*var sourceData = d3.select(specificCircle1).datum();
     sourceData.x = x[sourceData.id]
-    sourceData.y = y[sourceData.id]
+    sourceData.y = y[sourceData.id]*/
+    var sourceDataList = []
+    for(var i=0;i<lines.length;i++){
+        let sourceData = d3.select(specificCircle1).datum();
+        sourceData.x = x[sourceData.id]
+        sourceData.y = y[sourceData.id]
+        sourceDataList.push(sourceData)
+    }
 
     var specificCircle2 = circleElements.nodes()[data2.target.id]
-    specificCircle3 = circleElements.nodes()[12]
-    targetData = d3.select(specificCircle2).datum();
+    /*var targetData = d3.select(specificCircle2).datum();
     targetData.x = x[targetData.id]
-    targetData.y = y[targetData.id]
+    targetData.y = y[targetData.id]*/
+    var targetDataList = []
+    for(var i=0;i<lines.length;i++){
+        let targetData = d3.select(specificCircle2).datum();
+        targetData.x = x[targetData.id]
+        targetData.y = y[targetData.id]
+        targetDataList.push(targetData)
+    }
+
+    //var specificCircle3 = circleElements.nodes()[12]
+    var circles = []
+    for(var i=3;i<=6;i++){
+        circles.push(circleElements.nodes()[i])
+    }
+    for(var i=8;i<=12;i++){
+        circles.push(circleElements.nodes()[i])
+    }
+
+    //return {specificLine1, specificCircle3, sourceData, targetData}
+    return {lines, circles, sourceDataList, targetDataList}
 }
 
 
@@ -104,12 +139,22 @@ moveButton.addEventListener("click", () => {
 
     var coordinates = centralize()
     var x = coordinates.x, y = coordinates.y
-    getData(x, y)
+    var returnObj = getData(x, y)
+    //console.log(returnObj)
 
     // Move the line to new position (e.g., new coordinates for x1, y1, x2, y2)
-    animateLineMovement(specificLine1, sourceData.x, sourceData.y, targetData.x, targetData.y); // Move line to new position
-    animateCircleMovement(specificCircle3, targetData.x, targetData.y)
+    /*animateLineMovement(returnObj.specificLine1, returnObj.sourceData.x, returnObj.sourceData.y, returnObj.targetData.x, returnObj.targetData.y); // Move line to new position
+    animateCircleMovement(returnObj.specificCircle3, returnObj.targetData.x, returnObj.targetData.y)*/
+    for(var i=0;i<returnObj.lines.length;i++){
+        animateLineMovement(returnObj.lines[i], returnObj.sourceDataList[i].x, returnObj.sourceDataList[i].y, returnObj.targetDataList[i].x, returnObj.targetDataList[i].y); // Move line to new position
+        animateCircleMovement(returnObj.circles[i], returnObj.targetDataList[i].x, returnObj.targetDataList[i].y)
+    }
 
     // Move the circle to a new position
     //animateCircleMovement();
+});
+
+
+zoomButton.addEventListener("click", () => {
+    centralize()
 });
