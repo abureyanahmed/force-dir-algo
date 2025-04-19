@@ -2,13 +2,17 @@
 // Get the button and SVG elements
 const zoomButton = document.getElementById("centralizeButton");
 const moveButton = document.getElementById("moveButton");
+const compressButton = document.getElementById("compressButton");
 const line = document.querySelector("line");
 const circle = document.querySelector("circle");
+
+var comDuration = 500
 
 // Function to animate the movement of the line
 function animateLineMovement(line, newX1, newY1, newX2, newY2) {
     //const duration = 1000; // Animation duration in milliseconds
-    const duration = 5000;
+    //const duration = 5000;
+    const duration = comDuration;
     const startTime = performance.now();
 
     // Current positions of the line
@@ -47,7 +51,7 @@ function animateLineMovement(line, newX1, newY1, newX2, newY2) {
 // Function to animate the circle movement (for completeness)
 function animateCircleMovement(circle, circleNewX, circleNewY) {
     //const circleDuration = 1000;
-    const circleDuration = 5000;
+    const circleDuration = comDuration;
     console.log(circle)
     const circleStartX = parseFloat(circle.getAttribute('cx'));
     const circleStartY = parseFloat(circle.getAttribute('cy'));
@@ -132,7 +136,93 @@ function getData(x, y){
     return {lines, circles, sourceDataList, targetDataList}
 }
 
+function rotatePoint(ox, oy, px, py, t) {
+    // Convert angle t to radians
+    const radians = t * (Math.PI / 180);
+    
+    // Translate the point to the origin (ox, oy)
+    const translatedX = px - ox;
+    const translatedY = py - oy;
+    
+    // Perform the rotation
+    const rotatedX = translatedX * Math.cos(radians) + translatedY * Math.sin(radians);
+    const rotatedY = -translatedX * Math.sin(radians) + translatedY * Math.cos(radians);
+    
+    // Translate back to the original position
+    const finalX = rotatedX + ox;
+    const finalY = rotatedY + oy;
+    
+    return { x: finalX, y: finalY };
+  }
+  
 
+
+
+function getDataCompress(x, y){
+
+    var lineElements = svg.selectAll('line')
+    //console.log('lineElements', lineElements, lineElements.nodes(), lineElements.nodes()[11])
+    //var specificLine1 = lineElements.nodes()[11]
+    var lines = []
+    for(var i=12;i<=21;i++){
+        lines.push(lineElements.nodes()[i])
+    }
+    //var data1 = d3.select(specificLine1).datum();
+
+    var circleElements = svg.selectAll('circle')
+
+    //var specificCircle3 = circleElements.nodes()[12]
+    var circles = []
+    for(var i=13;i<=22;i++){
+        circles.push(circleElements.nodes()[i])
+    }
+
+    //console.log(x[sourceID], y[sourceID], x[targetID], y[targetID], rotatePoint(x[sourceID], y[sourceID], x[targetID], y[targetID], -80))
+
+    
+    var sourceDataList = []
+    var targetDataList = []
+    var angle = 80
+    var prevRotate = {x:0, y:0}
+    var prevTarget = {x:0, y:0}
+    for(var i=0;i<lines.length;i++){
+
+        if(i%2==0){
+            angle = -80
+        }else{
+            angle = 80
+        }
+
+        var sourceID = -1
+        if(i==0){
+            sourceID = d3.select(lines[i]).datum().source.id
+        }else{
+            sourceID = d3.select(lines[i-1]).datum().target.id
+        }
+        var targetID = d3.select(lines[i]).datum().target.id
+
+        let sourceData = {x:0, y:0};
+        sourceData.x = x[sourceID] - (prevTarget.x - prevRotate.x)
+        sourceData.y = y[sourceID] - (prevTarget.y - prevRotate.y)
+        sourceDataList.push(sourceData)
+
+        let targetData = {x:0, y:0};
+        let afterRotate = rotatePoint(x[sourceID], y[sourceID], x[targetID], y[targetID], angle)
+        targetData.x = afterRotate.x - (prevTarget.x - prevRotate.x)
+        targetData.y = afterRotate.y - (prevTarget.y - prevRotate.y)
+        targetDataList.push(targetData)
+
+        prevRotate.x += afterRotate.x
+        prevRotate.y += afterRotate.y
+        prevTarget.x += x[targetID]
+        prevTarget.y += y[targetID]
+    }
+
+    //return {specificLine1, specificCircle3, sourceData, targetData}
+    return {lines, circles, sourceDataList, targetDataList}
+}
+
+var oldCoordinates = null;
 
 // Add click event listener to the button
 moveButton.addEventListener("click", () => {
@@ -145,6 +235,26 @@ moveButton.addEventListener("click", () => {
     // Move the line to new position (e.g., new coordinates for x1, y1, x2, y2)
     /*animateLineMovement(returnObj.specificLine1, returnObj.sourceData.x, returnObj.sourceData.y, returnObj.targetData.x, returnObj.targetData.y); // Move line to new position
     animateCircleMovement(returnObj.specificCircle3, returnObj.targetData.x, returnObj.targetData.y)*/
+    for(var i=0;i<returnObj.lines.length;i++){
+        animateLineMovement(returnObj.lines[i], returnObj.sourceDataList[i].x, returnObj.sourceDataList[i].y, returnObj.targetDataList[i].x, returnObj.targetDataList[i].y); // Move line to new position
+        animateCircleMovement(returnObj.circles[i], returnObj.targetDataList[i].x, returnObj.targetDataList[i].y)
+    }
+
+    // set the oldCoordinates equal to cooridnates for the other action
+    oldCoordinates = coordinates
+
+    // Move the circle to a new position
+    //animateCircleMovement();
+});
+
+
+
+// Add click event listener to the button
+compressButton.addEventListener("click", () => {
+
+    var x = oldCoordinates.x, y = oldCoordinates.y
+    var returnObj = getDataCompress(x, y)
+
     for(var i=0;i<returnObj.lines.length;i++){
         animateLineMovement(returnObj.lines[i], returnObj.sourceDataList[i].x, returnObj.sourceDataList[i].y, returnObj.targetDataList[i].x, returnObj.targetDataList[i].y); // Move line to new position
         animateCircleMovement(returnObj.circles[i], returnObj.targetDataList[i].x, returnObj.targetDataList[i].y)
