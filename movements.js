@@ -3,6 +3,7 @@
 const zoomButton = document.getElementById("centralizeButton");
 const moveButton = document.getElementById("moveButton");
 const compressButton = document.getElementById("compressButton");
+const unmergeButton = document.getElementById("unmergeButton");
 const line = document.querySelector("line");
 const circle = document.querySelector("circle");
 
@@ -52,7 +53,7 @@ function animateLineMovement(line, newX1, newY1, newX2, newY2) {
 function animateCircleMovement(circle, circleNewX, circleNewY) {
     //const circleDuration = 1000;
     const circleDuration = comDuration;
-    console.log(circle)
+    //console.log(circle)
     const circleStartX = parseFloat(circle.getAttribute('cx'));
     const circleStartY = parseFloat(circle.getAttribute('cy'));
     //const circleNewX = 150;
@@ -123,6 +124,19 @@ function getData(x, y){
         targetDataList.push(targetData)
     }
 
+    var oldDataList = []
+    for(var i=0;i<lines.length;i++){
+        let lineData = d3.select(lines[i]).datum();
+        let curCircle = circleElements.nodes()[lineData.target.id]
+
+        let targetData = d3.select(curCircle).datum();
+        let tempObj = {x:0, y:0}
+        tempObj.x = x[targetData.id]
+        tempObj.y = y[targetData.id]
+        oldDataList.push(tempObj)
+    }
+    console.log('oldDataList', oldDataList)
+
     //var specificCircle3 = circleElements.nodes()[12]
     var circles = []
     for(var i=3;i<=6;i++){
@@ -133,7 +147,7 @@ function getData(x, y){
     }
 
     //return {specificLine1, specificCircle3, sourceData, targetData}
-    return {lines, circles, sourceDataList, targetDataList}
+    return {lines, circles, sourceDataList, targetDataList, oldDataList}
 }
 
 function rotatePoint(ox, oy, px, py, t) {
@@ -222,7 +236,70 @@ function getDataCompress(x, y){
     return {lines, circles, sourceDataList, targetDataList}
 }
 
+
+
+function getDataUnmerge(x, y, obj){
+
+    var lineElements = svg.selectAll('line')
+    //console.log('lineElements', lineElements, lineElements.nodes(), lineElements.nodes()[11])
+    //var specificLine1 = lineElements.nodes()[11]
+    var lines = []
+    for(var i=2;i<=5;i++){
+        lines.push(lineElements.nodes()[i])
+    }
+    for(var i=7;i<=11;i++){
+        lines.push(lineElements.nodes()[i])
+    }
+    //var data1 = d3.select(specificLine1).datum();
+
+    var specificLine2 = lineElements.nodes()[6]
+    var data2 = d3.select(specificLine2).datum();
+
+    var circleElements = svg.selectAll('circle')
+
+    var specificCircle1 = circleElements.nodes()[data2.source.id]
+    /*var sourceData = d3.select(specificCircle1).datum();
+    sourceData.x = x[sourceData.id]
+    sourceData.y = y[sourceData.id]*/
+    var sourceDataList = []
+    for(var i=0;i<lines.length;i++){
+        let sourceData = d3.select(specificCircle1).datum();
+        sourceData.x = x[sourceData.id]
+        sourceData.y = y[sourceData.id]
+        sourceDataList.push(sourceData)
+    }
+
+    //console.log('obj.oldDataList', obj.oldDataList)
+    var specificCircle2 = circleElements.nodes()[data2.target.id]
+    /*var targetData = d3.select(specificCircle2).datum();
+    targetData.x = x[targetData.id]
+    targetData.y = y[targetData.id]*/
+    var targetDataList = []
+    for(var i=0;i<lines.length;i++){
+        let targetData = d3.select(specificCircle2).datum();
+        //console.log(x[targetData.id], obj.oldDataList[i].x)
+        let tempObj = {x:0, y:0}
+        tempObj.x = x[targetData.id] + (x[targetData.id]-obj.oldDataList[i].x)*.5
+        tempObj.y = y[targetData.id]
+        targetDataList.push(tempObj)
+    }
+    //console.log('targetDataList', targetDataList)
+
+    //var specificCircle3 = circleElements.nodes()[12]
+    var circles = []
+    for(var i=3;i<=6;i++){
+        circles.push(circleElements.nodes()[i])
+    }
+    for(var i=8;i<=12;i++){
+        circles.push(circleElements.nodes()[i])
+    }
+
+    //return {specificLine1, specificCircle3, sourceData, targetData}
+    return {lines, circles, sourceDataList, targetDataList}
+}
+
 var oldCoordinates = null;
+var firstReturnObject = null;
 
 // Add click event listener to the button
 moveButton.addEventListener("click", () => {
@@ -242,6 +319,7 @@ moveButton.addEventListener("click", () => {
 
     // set the oldCoordinates equal to cooridnates for the other action
     oldCoordinates = coordinates
+    firstReturnObject = returnObj
 
     // Move the circle to a new position
     //animateCircleMovement();
@@ -254,6 +332,23 @@ compressButton.addEventListener("click", () => {
 
     var x = oldCoordinates.x, y = oldCoordinates.y
     var returnObj = getDataCompress(x, y)
+
+    for(var i=0;i<returnObj.lines.length;i++){
+        animateLineMovement(returnObj.lines[i], returnObj.sourceDataList[i].x, returnObj.sourceDataList[i].y, returnObj.targetDataList[i].x, returnObj.targetDataList[i].y); // Move line to new position
+        animateCircleMovement(returnObj.circles[i], returnObj.targetDataList[i].x, returnObj.targetDataList[i].y)
+    }
+
+    // Move the circle to a new position
+    //animateCircleMovement();
+});
+
+
+
+// Add click event listener to the button
+unmergeButton.addEventListener("click", () => {
+
+    var x = oldCoordinates.x, y = oldCoordinates.y
+    var returnObj = getDataUnmerge(x, y, firstReturnObject)
 
     for(var i=0;i<returnObj.lines.length;i++){
         animateLineMovement(returnObj.lines[i], returnObj.sourceDataList[i].x, returnObj.sourceDataList[i].y, returnObj.targetDataList[i].x, returnObj.targetDataList[i].y); // Move line to new position

@@ -15,6 +15,7 @@
     <button id="centralizeButton">Zoom</button>
     <button id="moveButton">Merge</button>
     <button id="compressButton">Compress</button>
+    <button id="unmergeButton">Unmerge</button>
     <script>
         
         const svg = d3.select("svg")
@@ -29,14 +30,20 @@
             cy_arr.push(Math.random()*10)
             r_arr.push(2)
         }
-        cx_arr[0] = 20, cy_arr[0] = 0
-        cx_arr[1] = 15, cy_arr[1] = 1
-        cx_arr[2] = 25, cy_arr[2] = 1
+        var root_x = 20
+        var gap = 2.6
+        var right_x = root_x + gap
+        var left_x = root_x - gap
+        var edge_len = 1
+        var edge_len2 = 3
+        cx_arr[0] = root_x, cy_arr[0] = 0
+        cx_arr[1] = left_x, cy_arr[1] = cy_arr[0] + edge_len
+        cx_arr[2] = right_x, cy_arr[2] = cy_arr[0] + edge_len
         for(var i=3;i<=12;i++){
-            cx_arr[i] = 8+i, cy_arr[i] = 2
+            cx_arr[i] = left_x-7+i, cy_arr[i] = cy_arr[1] + edge_len
         }
         for(var i=13;i<=22;i++){
-            cx_arr[i] = 25, cy_arr[i] = 2+i-13
+            cx_arr[i] = right_x, cy_arr[i] = cy_arr[2] + (i-12)*edge_len2
         }
         const nodes = d3.range(node_ids.length).map(
             //(d) => {return {id:d, x:Math.random()*500+20, y:Math.random()*500+20, r:Math.random()*200}}
