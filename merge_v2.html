@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Boundary-Constrained Tree Update</title>
+  <style>
+    svg {
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+    }
+    button {
+      margin: 10px;
+    }
+    text {
+      font-size: 10px;
+      fill: black;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="updateTreeAndRedraw()">Update Tree Coordinates</button>
+  <svg id="treeSvg" width="800" height="600"></svg>
+
+  <script>
+    const origin = { x: 400, y: 50 };
+
+    const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 250, y: 250 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } }
+    ];
+
+    const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 280, y: 150 },
+          children: []
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild1",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };
+
+    function updateTreeAndRedraw() {
+      updateTreeCoordinates(subtree);
+      drawTree(origin, leftBoundary, rightBoundary, subtree);
+    }
+
+    function updateTreeCoordinates(tree) {
+      // Step 1: Copy original coordinates
+      const originalCoordinates = new Map();
+      function storeOriginalCoords(node) {
+        originalCoordinates.set(node, { ...node.coordinates });
+        node.children?.forEach(storeOriginalCoords);
+      }
+      storeOriginalCoords(tree);
+
+      // Step 2: Update root
+      tree.coordinates = { ...leftBoundary[0].start };
+
+      // Step 3: Traverse and update
+      const queue = [{ node: tree, depth: 0 }];
+
+      while (queue.length > 0) {
+        const { node, depth } = queue.shift();
+        const oldParentCoord = originalCoordinates.get(node);
+
+        const left = midpoint(leftBoundary[Math.min(depth, leftBoundary.length - 1)]);
+        const right = midpoint(rightBoundary[Math.min(depth, rightBoundary.length - 1)]);
+        const avg = {
+          x: (left.x + right.x) / 2,
+          y: (left.y + right.y) / 2
+        };
+
+        for (let child of node.children || []) {
+          const oldChildCoord = originalCoordinates.get(child);
+
+          // Original vector from parent to child
+          const vx = oldChildCoord.x - oldParentCoord.x;
+          const vy = oldChildCoord.y - oldParentCoord.y;
+          const originalAngle = Math.atan2(vy, vx); // angle of original vector
+
+          // New direction vector from parent to the average of the boundary
+          const dx = avg.x - node.coordinates.x;
+          const dy = avg.y - node.coordinates.y;
+          const targetAngle = Math.atan2(dy, dx); // angle of target direction
+
+          // Normalize the angle difference to ensure shortest rotation
+          const angleDiff = normalizeAngle(targetAngle - originalAngle);
+          alert(angleDiff)
+
+          // Rotate the original vector by the computed angle difference
+          const rotated = rotateVector(vx, vy, angleDiff);
+
+          // Set the new coordinates for the child node
+          child.coordinates = {
+            x: node.coordinates.x + rotated.x,
+            y: node.coordinates.y + rotated.y
+          };
+
+          queue.push({ node: child, depth: depth + 1 });
+        }
+      }
+    }
+
+    function rotateVector(x, y, angle) {
+      return {
+        x: x * Math.cos(angle) - y * Math.sin(angle),
+        y: x * Math.sin(angle) + y * Math.cos(angle)
+      };
+    }
+
+    function normalizeAngle(angle) {
+      // Normalize the angle to the range [-π, π]
+      return Math.atan2(Math.sin(angle), Math.cos(angle));
+    }
+
+    function midpoint(segment) {
+      return {
+        x: (segment.start.x + segment.end.x) / 2,
+        y: (segment.start.y + segment.end.y) / 2
+      };
+    }
+
+    function drawTree(origin, leftBoundary, rightBoundary, subtree) {
+      const svg = document.getElementById("treeSvg");
+      svg.innerHTML = ""; // Clear previous drawing
+
+      const createSVGElement = (type, attrs) => {
+        const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+        for (let attr in attrs) {
+          elem.setAttribute(attr, attrs[attr]);
+        }
+        return elem;
+      };
+
+      // Draw boundaries
+      function drawLines(boundary, color) {
+        for (const segment of boundary) {
+          svg.appendChild(createSVGElement("line", {
+            x1: segment.start.x,
+            y1: segment.start.y,
+            x2: segment.end.x,
+            y2: segment.end.y,
+            stroke: color,
+            "stroke-width": 2
+          }));
+        }
+      }
+
+      drawLines(leftBoundary, "green");
+      drawLines(rightBoundary, "blue");
+
+      // Draw subtree
+      function drawSubtree(node) {
+        svg.appendChild(createSVGElement("circle", {
+          cx: node.coordinates.x,
+          cy: node.coordinates.y,
+          r: 4,
+          fill: "black"
+        }));
+        svg.appendChild(createSVGElement("text", {
+          x: node.coordinates.x + 5,
+          y: node.coordinates.y - 5
+        })).textContent = node.name;
+
+        if (node.children) {
+          for (const child of node.children) {
+            svg.appendChild(createSVGElement("line", {
+              x1: node.coordinates.x,
+              y1: node.coordinates.y,
+              x2: child.coordinates.x,
+              y2: child.coordinates.y,
+              stroke: "gray",
+              "stroke-dasharray": "3,3"
+            }));
+            drawSubtree(child);
+          }
+        }
+      }
+
+      drawSubtree(subtree);
+    }
+
+    // Initial draw
+    drawTree(origin, leftBoundary, rightBoundary, subtree);
+  </script>
+</body>
+</html>
