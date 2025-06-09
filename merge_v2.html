@@ -87,6 +87,7 @@
           x: (left.x + right.x) / 2,
           y: (left.y + right.y) / 2
         };
+        //alert("avg\n" + avg.x + '\n' + avg.y)
 
         for (let child of node.children || []) {
           const oldChildCoord = originalCoordinates.get(child);
@@ -97,13 +98,16 @@
           const originalAngle = Math.atan2(vy, vx); // angle of original vector
 
           // New direction vector from parent to the average of the boundary
-          const dx = avg.x - node.coordinates.x;
-          const dy = avg.y - node.coordinates.y;
+          //const dx = avg.x - node.coordinates.x;
+          const dx = avg.x - leftBoundary[0].start.x;
+          //const dy = avg.y - node.coordinates.y;
+          const dy = avg.y - leftBoundary[0].start.y;
           const targetAngle = Math.atan2(dy, dx); // angle of target direction
 
           // Normalize the angle difference to ensure shortest rotation
-          const angleDiff = normalizeAngle(targetAngle - originalAngle);
-          alert(angleDiff)
+          //const angleDiff = normalizeAngle(targetAngle - originalAngle);
+          const angleDiff = targetAngle - originalAngle;
+          //alert(child.name + "\noriginalAngle:" + originalAngle + "\ntargetAngle:" + targetAngle + "\nangleDiff:" + angleDiff)
 
           // Rotate the original vector by the computed angle difference
           const rotated = rotateVector(vx, vy, angleDiff);
