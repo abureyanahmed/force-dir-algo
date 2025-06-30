@@ -159,17 +159,37 @@
       let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
       let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
       let angle = angle_rad(p_arr, q_arr)
-      //alert(angle)
+      alert(angle*57.2958)
       let n_children = tree.children.length
       let angle_per_child = angle/n_children
+      alert(angle_per_child*57.2958)
 
       for(let i=0;i<n_children;i++){
+        // rotated_vector : boundary rotated to appropriate angle
         let rotated_vector = rotate_vec_arr(p_arr, i*angle_per_child+angle_per_child/2)
-        rotated_vector = JS_vector(rotated_vector)
+        alert(i*angle_per_child+angle_per_child/2*57.2958)
+        let angle_from_left = angle_rad(p_arr, rotated_vector)
+        alert(angle_from_left*57.2958)
+        //rotated_vector = JS_vector(rotated_vector)
+        //alert(rotated_vector[0] + "," +rotated_vector[1])
+
+        // now rotate the tree edge instead of boundary 
         let child = tree.children[i]
+        let e = { ...child.coordinates }; // e for edge
+        let e_arr = JS_vector([e.x-origin.x, e.y-origin.y])
+        //alert(e_arr[0] + "," +e_arr[1])
+        //let e_arr = [e.x-origin.x, e.y-origin.y]
+        let e_angle = angle_rad(e_arr, rotated_vector)
+        //alert(e_angle*57.2958)
+        let e_rotated_vector = rotate_vec_arr(e_arr, e_angle)
+        let e_angle_from_left = angle_rad(p_arr, e_rotated_vector)
+        alert(e_angle_from_left*57.2958)
+        e_rotated_vector = JS_vector(e_rotated_vector) 
+        //alert(e_rotated_vector[0] + "," +e_rotated_vector[1])
+
         child.coordinates = {
-            x: tree.coordinates.x + rotated_vector[0],
-            y: tree.coordinates.y + rotated_vector[1]
+            x: tree.coordinates.x + e_rotated_vector[0],
+            y: tree.coordinates.y + e_rotated_vector[1]
           };
       }
 
