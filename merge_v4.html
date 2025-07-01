@@ -96,23 +96,28 @@
       let y1 = p[1]
       let x2 = q[0]
       let y2 = q[1]
-      console.log(x1, y1)
+      /*console.log(x1, y1)
       console.log(x2, y2)
-      console.log(x1*y2-x2*y1)
+      console.log(x1*y2-x2*y1)*/
       return (x1*y2-x2*y1)/(norm(p)*norm(q))
     }
 
     function cos_f(p, q){
+      //alert("Inside cos_f")
       let x1 = p[0]
       let y1 = p[1]
       let x2 = q[0]
       let y2 = q[1]
-      return (x1*y1+x2*y2)/(norm(p)*norm(q))
+      //alert("p[0]:"+p[0]+",p[1]:"+p[1]+",q[0]:"+q[0]+",q[1]:"+q[1]+",|p|:"+norm(p)+",|q|:"+norm(q))
+      return (x1*x2+y1*y2)/(norm(p)*norm(q))
     }
 
     function angle_rad(p, q){
+      //alert("Inside angle_rad")
       let sint = sin_f(p, q)
+      //alert("sint:"+sint)
       let cost = cos_f(p, q)
+      //alert("cost:"+cost)
       let theta = Math.acos(cost)
       //console.log(theta)
       //theta = theta*180/Math.PI
@@ -157,19 +162,21 @@
       let p = { ...leftBoundary[0].end };
       let q = { ...rightBoundary[0].end };
       let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+      //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
       let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
       let angle = angle_rad(p_arr, q_arr)
-      alert(angle*57.2958)
+      //alert(angle*57.2958)
       let n_children = tree.children.length
       let angle_per_child = angle/n_children
-      alert(angle_per_child*57.2958)
+      //alert(angle_per_child*57.2958)
 
       for(let i=0;i<n_children;i++){
         // rotated_vector : boundary rotated to appropriate angle
         let rotated_vector = rotate_vec_arr(p_arr, i*angle_per_child+angle_per_child/2)
-        alert(i*angle_per_child+angle_per_child/2*57.2958)
+        //alert("rotation angle:"+((i*angle_per_child+angle_per_child/2)*57.2958))
+        //alert("rotated_vector:"+rotated_vector[0] + "," +rotated_vector[1])
         let angle_from_left = angle_rad(p_arr, rotated_vector)
-        alert(angle_from_left*57.2958)
+        //lert("angle_from_left:"+(angle_from_left*57.2958))
         //rotated_vector = JS_vector(rotated_vector)
         //alert(rotated_vector[0] + "," +rotated_vector[1])
 
@@ -177,13 +184,13 @@
         let child = tree.children[i]
         let e = { ...child.coordinates }; // e for edge
         let e_arr = JS_vector([e.x-origin.x, e.y-origin.y])
-        //alert(e_arr[0] + "," +e_arr[1])
+        //alert("e_arr:"+e_arr[0] + "," +e_arr[1])
         //let e_arr = [e.x-origin.x, e.y-origin.y]
         let e_angle = angle_rad(e_arr, rotated_vector)
         //alert(e_angle*57.2958)
         let e_rotated_vector = rotate_vec_arr(e_arr, e_angle)
         let e_angle_from_left = angle_rad(p_arr, e_rotated_vector)
-        alert(e_angle_from_left*57.2958)
+        //alert(e_angle_from_left*57.2958) // expected 22.5, actual 31
         e_rotated_vector = JS_vector(e_rotated_vector) 
         //alert(e_rotated_vector[0] + "," +e_rotated_vector[1])
 
