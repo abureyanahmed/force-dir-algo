@@ -121,9 +121,20 @@
       let theta = Math.acos(cost)
       //console.log(theta)
       //theta = theta*180/Math.PI
-      if(sint>=0) return theta
+      if(sint>=0 && cost>=0)
+      {
+        console.log(theta*57.2958)
+        return theta
+      }
+      else if(sint>=0 && cost<0){
+        console.log((theta)*57.2958)
+        return theta
+      }
       //else return 180 + theta
-      else return Math.PI + theta
+      else{
+        console.log((2*Math.PI - theta)*57.2958)
+        return 2*Math.PI - theta
+      }
     }
 
     function updateTreeAndRedraw() {
@@ -176,7 +187,7 @@
         //alert("rotation angle:"+((i*angle_per_child+angle_per_child/2)*57.2958))
         //alert("rotated_vector:"+rotated_vector[0] + "," +rotated_vector[1])
         let angle_from_left = angle_rad(p_arr, rotated_vector)
-        //lert("angle_from_left:"+(angle_from_left*57.2958))
+        //alert("angle_from_left:"+(angle_from_left*57.2958))
         //rotated_vector = JS_vector(rotated_vector)
         //alert(rotated_vector[0] + "," +rotated_vector[1])
 
@@ -186,6 +197,7 @@
         let e_arr = JS_vector([e.x-origin.x, e.y-origin.y])
         //alert("e_arr:"+e_arr[0] + "," +e_arr[1])
         //let e_arr = [e.x-origin.x, e.y-origin.y]
+        //alert("reached")
         let e_angle = angle_rad(e_arr, rotated_vector)
         //alert(e_angle*57.2958)
         let e_rotated_vector = rotate_vec_arr(e_arr, e_angle)
