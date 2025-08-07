@@ -24,7 +24,7 @@
   <script>
     const origin = { x: 400, y: 50 };
 
-    const leftBoundary = [
+    /*const leftBoundary = [
       { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
       { start: { x: 300, y: 150 }, end: { x: 250, y: 250 } }
     ];
@@ -32,6 +32,16 @@
     const rightBoundary = [
       { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
       { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } }
+    ];*/
+
+    const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } }
     ];
 
     /*const leftBoundary = [
@@ -173,14 +183,23 @@
       return (x1*y2-x2*y1)/(norm(p)*norm(q))
     }
 
-    function cos_f(p, q){
-      //alert("Inside cos_f")
+    function dot_prod(p,q){
       let x1 = p[0]
       let y1 = p[1]
       let x2 = q[0]
       let y2 = q[1]
+      return x1*x2+y1*y2
+    }
+
+    function cos_f(p, q){
+      //alert("Inside cos_f")
+      /*let x1 = p[0]
+      let y1 = p[1]
+      let x2 = q[0]
+      let y2 = q[1]*/
       //alert("p[0]:"+p[0]+",p[1]:"+p[1]+",q[0]:"+q[0]+",q[1]:"+q[1]+",|p|:"+norm(p)+",|q|:"+norm(q))
-      return (x1*x2+y1*y2)/(norm(p)*norm(q))
+      //return (x1*x2+y1*y2)/(norm(p)*norm(q))
+      return dot_prod(p,q)/(norm(p)*norm(q))
     }
 
     function angle_rad(p, q){
@@ -209,7 +228,7 @@
     }
 
     function updateTreeAndRedraw() {
-      updateTreeCoordinates(subtree);
+      updateTreeCoordinates(subtree, leftBoundary, rightBoundary);
       drawTree(origin, leftBoundary, rightBoundary, subtree);
     }
 
@@ -241,7 +260,7 @@
       return 0
     }
 
-    function updateTreeCoordinates(tree) {
+    function updateTreeCoordinates(tree, leftBoundary, rightBoundary) {
       // find depth
       let depth = find_depth(tree)
 
@@ -306,10 +325,6 @@
       }
       else if(tree.children.length==1){
         // draw that single child
-        // compute a parpendicular line
-        // find out the intersection with a boundary line
-        // update the boundary
-
         tree.coordinates = { ...leftBoundary[0].start };
 
         // let root has n children
@@ -343,6 +358,31 @@
         };
 
         alert(p_arr[0] + ',' + p_arr[1] + ',' + e_rotated_vector[0] + ',' + e_rotated_vector[1])
+
+        // compute a parpendicular line
+        // find out the intersection with a boundary line
+        e_rotated_vector = JS_vector(e_rotated_vector)
+        let e_norm = norm(e_rotated_vector)
+        let e_unit = [e_rotated_vector[0]/e_norm, e_rotated_vector[1]/e_norm]
+        let p_proj = dot_prod(p_arr, e_unit)
+        alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+
+        let i = 1
+        while((p_proj-e_norm)<0){
+          alert("here")
+          e_norm = e_norm - p_proj
+          origin = { ...leftBoundary[i].start }
+          p = { ...leftBoundary[i].end }
+          p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+          p_proj = dot_prod(p_arr, e_unit)
+          alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+          i += 1
+        }
+
+
+        // update the boundary
+
+        
       }
       else{
 
