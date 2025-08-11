@@ -228,7 +228,15 @@
     }
 
     function updateTreeAndRedraw() {
-      updateTreeCoordinates(subtree, leftBoundary, rightBoundary);
+      // Step 1: Copy original coordinates
+      const originalCoordinates = new Map();
+      function storeOriginalCoords(node) {
+        originalCoordinates.set(node, { x: node.coordinates.x, y: node.coordinates.y });
+        node.children?.forEach(storeOriginalCoords);
+      }
+      storeOriginalCoords(subtree);
+
+      updateTreeCoordinates(subtree, leftBoundary, rightBoundary, originalCoordinates);
       drawTree(origin, leftBoundary, rightBoundary, subtree);
     }
 
@@ -260,17 +268,12 @@
       return 0
     }
 
-    function updateTreeCoordinates(tree, leftBoundary, rightBoundary) {
+    function updateTreeCoordinates(tree, leftBoundary, rightBoundary, originalCoordinates) {
+      //console.log("input", tree, leftBoundary, rightBoundary, originalCoordinates)
+      //console.log("Input", tree.name, tree.coordinates.x, tree.coordinates.y)
+      //console.log(tree.children[0].name, tree.children[0].coordinates.x, tree.children[0].coordinates.y)
       // find depth
       let depth = find_depth(tree)
-
-      // Step 1: Copy original coordinates
-      const originalCoordinates = new Map();
-      function storeOriginalCoords(node) {
-        originalCoordinates.set(node, { ...node.coordinates });
-        node.children?.forEach(storeOriginalCoords);
-      }
-      storeOriginalCoords(tree);
       
       if(depth<=1){
         // if depth <= 1
@@ -286,6 +289,7 @@
         let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
         //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
         let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
+        //alert("q_arr:"+q_arr[0] + "," +q_arr[1])
         let angle = angle_rad(p_arr, q_arr)
         //alert(angle*57.2958)
         let n_children = tree.children.length
@@ -357,7 +361,7 @@
           y: tree.coordinates.y + e_rotated_vector[1]
         };
 
-        alert(p_arr[0] + ',' + p_arr[1] + ',' + e_rotated_vector[0] + ',' + e_rotated_vector[1])
+        //alert(p_arr[0] + ',' + p_arr[1] + ',' + e_rotated_vector[0] + ',' + e_rotated_vector[1])
 
         // compute a parpendicular line
         // find out the intersection with a boundary line
@@ -365,22 +369,47 @@
         let e_norm = norm(e_rotated_vector)
         let e_unit = [e_rotated_vector[0]/e_norm, e_rotated_vector[1]/e_norm]
         let p_proj = dot_prod(p_arr, e_unit)
-        alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+        //alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
 
         let i = 1
         while((p_proj-e_norm)<0){
-          alert("here")
+          //alert("here")
           e_norm = e_norm - p_proj
           origin = { ...leftBoundary[i].start }
           p = { ...leftBoundary[i].end }
           p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
           p_proj = dot_prod(p_arr, e_unit)
-          alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+          //alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
           i += 1
         }
 
+        let tranlate = {
+          x: child.coordinates.x - originalCoordinates.get(child).x,
+          y: child.coordinates.y - originalCoordinates.get(child).y
+        }
 
+        let newRoot = {
+          name: child.name,
+          //coordinates: { x: 580, y: 150 },
+          //coordinates: originalCoordinates.get(child),
+          coordinates: child.coordinates,
+          children: child.children
+        };
+        for(let k=0;k<newRoot.children.length;k=k+1){
+          newRoot.children[k].coordinates.x = newRoot.children[k].coordinates.x + tranlate.x
+          newRoot.children[k].coordinates.y = newRoot.children[k].coordinates.y + tranlate.y
+        }
         // update the boundary
+        let newLeftBoundary = [
+          { start: { x: child.coordinates.x, y: child.coordinates.y }, end: leftBoundary[i-1].end }
+        ];
+        let newRightBoundary = [
+          { start: { x: child.coordinates.x, y: child.coordinates.y }, end: rightBoundary[i-1].end }
+        ];
+
+        //console.log("recursion", newRoot, newLeftBoundary, newRightBoundary, originalCoordinates)
+        
+        updateTreeCoordinates(newRoot, newLeftBoundary, newRightBoundary, originalCoordinates)
 
         
       }
