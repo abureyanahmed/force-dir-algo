@@ -34,7 +34,7 @@
       { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } }
     ];*/
 
-    const leftBoundary = [
+    /*const leftBoundary = [
       { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
       { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } }
     ];
@@ -42,6 +42,20 @@
     const rightBoundary = [
       { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
       { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } }
+    ];*/
+
+    
+
+    const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } },
+      { start: { x: 200, y: 300 }, end: { x: 200, y: 450 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } },
+      { start: { x: 600, y: 300 }, end: { x: 600, y: 450 } }
     ];
 
     /*const leftBoundary = [
@@ -75,7 +89,7 @@
     };*/
 
     // depth 2, root has 1 child
-    const subtree = {
+    /*const subtree = {
       name: "Root",
       coordinates: { x: 400, y: 50 },
       children: [
@@ -86,6 +100,46 @@
             {
               name: "Grandchild1",
               coordinates: { x: 600, y: 250 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };*/
+
+    // depth 2, root has 1 child
+    const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild11",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            },
+            {
+              name: "Grandchild12",
+              coordinates: { x: 620, y: 250 },
+              children: []
+            }
+          ]
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 680, y: 150 },
+          children: [
+            {
+              name: "Grandchild21",
+              coordinates: { x: 680, y: 250 },
+              children: []
+            },
+            {
+              name: "Grandchild22",
+              coordinates: { x: 690, y: 250 },
               children: []
             }
           ]
@@ -414,6 +468,25 @@
         
       }
       else{
+        // recursively find the solution
+
+        tree.coordinates = { ...leftBoundary[0].start };
+
+        // let root has n children
+        // draw the children proportionally
+        // find angle
+        let origin = { ...leftBoundary[0].start };
+        let p = { ...leftBoundary[0].end };
+        let q = { ...rightBoundary[0].end };
+        let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+        //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
+        let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
+        //alert("q_arr:"+q_arr[0] + "," +q_arr[1])
+        let angle = angle_rad(p_arr, q_arr)
+        //alert(angle*57.2958)
+        let n_children = tree.children.length
+        let angle_per_child = angle/n_children
+        //alert(angle_per_child*57.2958)
 
       }
       
