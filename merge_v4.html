@@ -226,6 +226,10 @@
       return Math.sqrt(x1**2 + y1**2)
     }
 
+    function distance(x1, y1, x2, y2){
+      return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
+    }
+
     function sin_f(p, q){
       let x1 = p[0]
       let y1 = p[1]
@@ -487,6 +491,31 @@
         let n_children = tree.children.length
         let angle_per_child = angle/n_children
         //alert(angle_per_child*57.2958)
+
+        // find height of the boundary region
+        let heights = []
+        let leftPoints = []
+        let prev_d = 0
+        for(var i=0;i<leftBoundary.length;i++){
+          let d = distance(leftBoundary[i].start.x, leftBoundary[i].start.y,
+            leftBoundary[i].end.x, leftBoundary[i].end.y
+          )
+          leftPoints.push([1, d+prev_d])
+          prev_d = d
+        }
+        let rightPoints = []
+        prev_d = 0
+        for(var i=0;i<rightBoundary.length;i++){
+          let d = distance(rightBoundary[i].start.x, rightBoundary[i].start.y,
+            rightBoundary[i].end.x, rightBoundary[i].end.y
+          )
+          rightPoints.push([2, d+prev_d])
+          prev_d = d
+        }
+        // run a bfs to find the number of vertices from each subtree in a region
+        // split the region proportionally
+        // for each region recursively solve it
+
 
       }
       
