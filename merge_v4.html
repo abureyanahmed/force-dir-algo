@@ -44,11 +44,23 @@
       { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } }
     ];*/
 
-    
-
-    const leftBoundary = [
+    /*const leftBoundary = [
       { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
       { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } },
+      { start: { x: 200, y: 300 }, end: { x: 200, y: 450 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } },
+      { start: { x: 600, y: 300 }, end: { x: 600, y: 450 } }
+    ];*/
+
+    const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 350, y: 70 } },
+      { start: { x: 350, y: 70 }, end: { x: 250, y: 150 } },
+      { start: { x: 250, y: 150 }, end: { x: 210, y: 230 } },
+      { start: { x: 210, y: 230 }, end: { x: 200, y: 300 } },
       { start: { x: 200, y: 300 }, end: { x: 200, y: 450 } }
     ];
 
@@ -512,6 +524,8 @@
           rightPoints.push([2, d+prev_d])
           prev_d = d
         }
+        console.log(leftPoints, rightPoints)
+        // sort the points based on the distance
         // run a bfs to find the number of vertices from each subtree in a region
         // split the region proportionally
         // for each region recursively solve it
