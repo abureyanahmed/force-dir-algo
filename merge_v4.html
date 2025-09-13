@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Boundary-Constrained Tree Update</title>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
   <style>
     svg {
       border: 1px solid #ccc;
@@ -529,6 +530,30 @@
         // run a bfs to find the number of vertices from each subtree in a region
         // split the region proportionally
         // for each region recursively solve it
+
+        // place the current node in appropriate length
+        const svg = document.getElementById("treeSvg");
+        svg.innerHTML = "";
+
+        const createSVGElement = (type, attrs) => {
+          const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+          for (let attr in attrs) {
+            elem.setAttribute(attr, attrs[attr]);
+          }
+          return elem;
+        };
+
+        svg.appendChild(createSVGElement("line", {
+            x1: tree.coordinates.x,
+            y1: tree.coordinates.y,
+            x2: tree.coordinates.x,
+            y2: tree.coordinates.x+100,
+            stroke: 'gray',
+            "stroke-width": 2
+          }))
+        
+
+        // check whether there is a crossing or not
 
 
       }
