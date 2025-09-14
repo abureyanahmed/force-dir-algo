@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <body>
+        <svg id="treeSvg" width="800" height="600"></svg>
+        <script>
+            
+            const tree = {
+            name: "Root",
+            coordinates: { x: 400, y: 50 },
+            children: [
+                {
+                name: "Child1",
+                coordinates: { x: 580, y: 150 },
+                children: [
+                    {
+                    name: "Grandchild11",
+                    coordinates: { x: 600, y: 250 },
+                    children: []
+                    },
+                    {
+                    name: "Grandchild12",
+                    coordinates: { x: 620, y: 250 },
+                    children: []
+                    }
+                ]
+                },
+                {
+                name: "Child2",
+                coordinates: { x: 680, y: 150 },
+                children: [
+                    {
+                    name: "Grandchild21",
+                    coordinates: { x: 680, y: 250 },
+                    children: []
+                    },
+                    {
+                    name: "Grandchild22",
+                    coordinates: { x: 690, y: 250 },
+                    children: []
+                    }
+                ]
+                }
+            ]
+            };
+
+            // place the current node in appropriate length
+            /*const svg = document.getElementById("treeSvg");
+            svg.innerHTML = "";
+
+            const createSVGElement = (type, attrs) => {
+            const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+            for (let attr in attrs) {
+                elem.setAttribute(attr, attrs[attr]);
+            }
+            return elem;
+            };
+
+            svg.appendChild(createSVGElement("line", {
+                x1: tree.coordinates.x,
+                y1: tree.coordinates.y,
+                x2: tree.coordinates.x,
+                y2: tree.coordinates.y+100,
+                stroke: 'gray',
+                "stroke-width": 2
+            }))*/
+
+            var g = d3.select("#treeSvg")
+            .append("g")
+            .attr('id', 'treeLayout')
+
+            var lines = g.selectAll('line')
+            .data([{x1: tree.coordinates.x,
+                y1: tree.coordinates.y,
+                x2: tree.coordinates.x,
+                y2: tree.coordinates.y+100,
+                stroke: 'gray',
+                "stroke-width": 2}])
+            .enter()
+            .append('line')
+            .attr('x1', d => d.x1)
+            .attr('y1', d => d.y1)
+            .attr('x2', d => d.x2)
+            .attr('y2', d => d.y2)
+            .style('stroke', 'gray')
+            .style("stroke-width", 2)
+            console.log(lines.node())
+        </script>
+    </body>
+</html>

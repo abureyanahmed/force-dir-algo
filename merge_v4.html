@@ -536,21 +536,21 @@
         svg.innerHTML = "";
 
         const createSVGElement = (type, attrs) => {
-          const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
-          for (let attr in attrs) {
+        const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+        for (let attr in attrs) {
             elem.setAttribute(attr, attrs[attr]);
-          }
-          return elem;
+        }
+        return elem;
         };
 
         svg.appendChild(createSVGElement("line", {
             x1: tree.coordinates.x,
             y1: tree.coordinates.y,
             x2: tree.coordinates.x,
-            y2: tree.coordinates.x+100,
+            y2: tree.coordinates.y+100,
             stroke: 'gray',
             "stroke-width": 2
-          }))
+        }))
         
 
         // check whether there is a crossing or not
