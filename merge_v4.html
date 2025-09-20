@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Boundary-Constrained Tree Update</title>
-  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <!--<script src="https://d3js.org/d3.v4.min.js"></script>-->
+  <script src="https://unpkg.com/d3@7.0.0/dist/d3.min.js"></script>
   <style>
     svg {
       border: 1px solid #ccc;
@@ -532,7 +533,7 @@
         // for each region recursively solve it
 
         // place the current node in appropriate length
-        const svg = document.getElementById("treeSvg");
+        /*const svg = document.getElementById("treeSvg");
         svg.innerHTML = "";
 
         const createSVGElement = (type, attrs) => {
@@ -550,7 +551,108 @@
             y2: tree.coordinates.y+100,
             stroke: 'gray',
             "stroke-width": 2
-        }))
+        }))*/
+
+        function get_nodes_recur(parent, tree, nodes, links){
+          var cur = {name:tree.name, id:nodes.length, index:nodes.length}
+          nodes.push(cur)
+          if(parent!=null){
+            links.push({source:parent.id, target:cur.id})
+          }
+          for(var i=0;i<tree.children.length;i++){
+            get_nodes_recur(cur, tree.children[i], nodes, links)
+          }
+          return [nodes, links]
+        }
+        function get_nodes(tree){
+          return get_nodes_recur(null, tree, [], [])
+        }
+        console.log(tree)
+        var result = get_nodes(tree)
+        var nodes = result[0]
+        var links = result[1]
+        console.log(nodes)
+        console.log(links)
+
+        var svg = d3.select("#treeSvg")
+        var width = svg.node().getBoundingClientRect().width;
+        var height = svg.node().getBoundingClientRect().height;
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(200))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // Create the links (edges)
+        const link = svg.selectAll(".link")
+            .data(links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        // Create the nodes
+        const node = svg.selectAll(".node")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 20);
+
+        // Update the positions of the nodes and links on each tick of the simulation
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        });
+
+        // Function to add a new node and edge
+        function addNode() {
+            const newNode = { id: nodes.length + 1 };
+            nodes.push(newNode);
+            const newLink = { source: nodes[0], target: newNode };
+            links.push(newLink);
+
+            // Restart the simulation with the new nodes and links
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+
+            link.data(links).exit().remove();
+            node.data(nodes).exit().remove();
+
+            // Rebind the new nodes and links to the DOM
+            link.enter().append("line").attr("class", "link");
+            node.enter().append("circle").attr("class", "node").attr("r", 20);
+
+            simulation.alpha(1).restart();
+        }
+
+        // Add new node and edge every 3 seconds (for demo purposes)
+        //setInterval(addNode, 3000);
+
+        /*var g = d3.select("#treeSvg")
+          .append("g")
+          .attr('id', 'treeLayout')
+
+          var lines = g.selectAll('line')
+          .data([{x1: tree.coordinates.x,
+              y1: tree.coordinates.y,
+              x2: tree.coordinates.x,
+              y2: tree.coordinates.y+100,
+              stroke: 'gray',
+              "stroke-width": 2}])
+          .enter()
+          .append('line')
+          .attr('x1', d => d.x1)
+          .attr('y1', d => d.y1)
+          .attr('x2', d => d.x2)
+          .attr('y2', d => d.y2)
+          .style('stroke', 'gray')
+          .style("stroke-width", 2)
+          //console.log(lines.node())*/
         
 
         // check whether there is a crossing or not
@@ -576,7 +678,7 @@
 
     function drawTree(origin, leftBoundary, rightBoundary, subtree) {
       const svg = document.getElementById("treeSvg");
-      svg.innerHTML = ""; // Clear previous drawing
+      //svg.innerHTML = ""; // Clear previous drawing
 
       const createSVGElement = (type, attrs) => {
         const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
