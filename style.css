@@ -1,0 +1,63 @@
+svg {
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+button {
+    margin: 10px;
+}
+text {
+    font-size: 10px;
+    fill: black;
+}
+
+/* Node Style */
+.node {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #3498db; /* Blue */
+  border: 2px solid #2980b9; /* Darker Blue Border */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow for effect */
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; /* Smooth scaling effect on hover */
+}
+
+.node:hover {
+  transform: scale(1.2); /* Slight zoom effect on hover */
+  background-color: #1d68a7; /* Darker Blue on hover */
+  border-color: #1a5376; /* Darker Border on hover */
+}
+
+/* Selected Node */
+.node.selected {
+  background-color: #e74c3c; /* Red for selected node */
+  border-color: #c0392b; /* Darker Red Border */
+}
+
+/* Label Style inside Node */
+.node-label {
+  font-size: 12px;
+  color: white;
+  text-align: center;
+  line-height: 20px; /* Centers the label vertically */
+}
+
+/* Link Style */
+.link {
+  stroke-width: 2;
+  stroke: #7f8c8d; /* Grayish color for links */
+  stroke-linecap: round;
+  transition: stroke 0.3s ease-in-out; /* Smooth transition on hover */
+}
+
+/* Hover on Link */
+.link:hover {
+  stroke: #e67e22; /* Orange on hover */
+  stroke-width: 3;
+}
+
+/* Selected Link */
+.link.selected {
+  stroke: #2ecc71; /* Green for selected link */
+  stroke-width: 4;
+}
