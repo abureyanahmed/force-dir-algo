@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Boundary-Constrained Tree Update</title>
+  <!--<script src="https://d3js.org/d3.v4.min.js"></script>-->
+  <script src="https://unpkg.com/d3@7.0.0/dist/d3.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <button onclick="updateTreeAndRedraw()">Update Tree Coordinates</button>
+  <svg id="treeSvg" width="800" height="600"></svg>
+
+  <script>
+    const origin = { x: 400, y: 50 };
+
+    /*const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 250, y: 250 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } }
+    ];*/
+
+    /*const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } }
+    ];*/
+
+    /*const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 200, y: 300 } },
+      { start: { x: 200, y: 300 }, end: { x: 200, y: 450 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } },
+      { start: { x: 600, y: 300 }, end: { x: 600, y: 450 } }
+    ];*/
+
+    const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 350, y: 70 } },
+      { start: { x: 350, y: 70 }, end: { x: 250, y: 150 } },
+      { start: { x: 250, y: 150 }, end: { x: 210, y: 230 } },
+      { start: { x: 210, y: 230 }, end: { x: 200, y: 300 } },
+      { start: { x: 200, y: 300 }, end: { x: 200, y: 450 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 600, y: 300 } },
+      { start: { x: 600, y: 300 }, end: { x: 600, y: 450 } }
+    ];
+
+    /*const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 250, y: 250 } },
+      { start: { x: 250, y: 250 }, end: { x: 225, y: 350 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } },
+      { start: { x: 550, y: 250 }, end: { x: 575, y: 350 } }
+    ];*/
+
+    // depth 1, 2 children
+    /*const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 280, y: 150 },
+          children: []
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 580, y: 150 },
+          children: []
+        }
+      ]
+    };*/
+
+    // depth 2, root has 1 child
+    /*const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild1",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };*/
+
+    // depth 2, root has 1 child
+    const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild11",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            },
+            {
+              name: "Grandchild12",
+              coordinates: { x: 620, y: 250 },
+              children: []
+            }
+          ]
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 680, y: 150 },
+          children: [
+            {
+              name: "Grandchild21",
+              coordinates: { x: 680, y: 250 },
+              children: []
+            },
+            {
+              name: "Grandchild22",
+              coordinates: { x: 690, y: 250 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };
+
+    /*const leftBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 300, y: 150 } },
+      { start: { x: 300, y: 150 }, end: { x: 250, y: 250 } },
+      { start: { x: 250, y: 250 }, end: { x: 150, y: 300 } }
+    ];
+
+    const rightBoundary = [
+      { start: { x: 400, y: 50 }, end: { x: 500, y: 150 } },
+      { start: { x: 500, y: 150 }, end: { x: 550, y: 250 } }
+    ];
+
+    const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 280, y: 150 },
+          children: []
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild1",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };*/
+
+    /*const subtree = {
+      name: "Root",
+      coordinates: { x: 400, y: 50 },
+      children: [
+        {
+          name: "Child1",
+          coordinates: { x: 280, y: 150 },
+          children: [
+            {
+              name: "Grandchild1",
+              coordinates: { x: 200, y: 240 },
+              children: []
+            },
+            {
+              name: "Grandchild2",
+              coordinates: { x: 225, y: 250 },
+              children: []
+            }
+          ]
+        },
+        {
+          name: "Child2",
+          coordinates: { x: 580, y: 150 },
+          children: [
+            {
+              name: "Grandchild3",
+              coordinates: { x: 600, y: 250 },
+              children: []
+            },
+            {
+              name: "Grandchild4",
+              coordinates: { x: 650, y: 230 },
+              children: []
+            }
+          ]
+        }
+      ]
+    };*/
+
+    function norm(p){
+      let x1 = p[0]
+      let y1 = p[1]
+      return Math.sqrt(x1**2 + y1**2)
+    }
+
+    function distance(x1, y1, x2, y2){
+      return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
+    }
+
+    function sin_f(p, q){
+      let x1 = p[0]
+      let y1 = p[1]
+      let x2 = q[0]
+      let y2 = q[1]
+      /*console.log(x1, y1)
+      console.log(x2, y2)
+      console.log(x1*y2-x2*y1)*/
+      return (x1*y2-x2*y1)/(norm(p)*norm(q))
+    }
+
+    function dot_prod(p,q){
+      let x1 = p[0]
+      let y1 = p[1]
+      let x2 = q[0]
+      let y2 = q[1]
+      return x1*x2+y1*y2
+    }
+
+    function cos_f(p, q){
+      //alert("Inside cos_f")
+      /*let x1 = p[0]
+      let y1 = p[1]
+      let x2 = q[0]
+      let y2 = q[1]*/
+      //alert("p[0]:"+p[0]+",p[1]:"+p[1]+",q[0]:"+q[0]+",q[1]:"+q[1]+",|p|:"+norm(p)+",|q|:"+norm(q))
+      //return (x1*x2+y1*y2)/(norm(p)*norm(q))
+      return dot_prod(p,q)/(norm(p)*norm(q))
+    }
+
+    function angle_rad(p, q){
+      //alert("Inside angle_rad")
+      let sint = sin_f(p, q)
+      //alert("sint:"+sint)
+      let cost = cos_f(p, q)
+      //alert("cost:"+cost)
+      let theta = Math.acos(cost)
+      //console.log(theta)
+      //theta = theta*180/Math.PI
+      if(sint>=0 && cost>=0)
+      {
+        console.log(theta*57.2958)
+        return theta
+      }
+      else if(sint>=0 && cost<0){
+        console.log((theta)*57.2958)
+        return theta
+      }
+      //else return 180 + theta
+      else{
+        console.log((2*Math.PI - theta)*57.2958)
+        return 2*Math.PI - theta
+      }
+    }
+
+    function updateTreeAndRedraw() {
+      // Step 1: Copy original coordinates
+      const originalCoordinates = new Map();
+      function storeOriginalCoords(node) {
+        originalCoordinates.set(node, { x: node.coordinates.x, y: node.coordinates.y });
+        node.children?.forEach(storeOriginalCoords);
+      }
+      storeOriginalCoords(subtree);
+
+      updateTreeCoordinates(subtree, leftBoundary, rightBoundary, originalCoordinates);
+      drawTree(origin, leftBoundary, rightBoundary, subtree);
+    }
+
+    function JS_vector(p){
+      return [p[0], -p[1]]
+    }
+
+    function rotate_vec_arr(p, angle){
+      let x = p[0]
+      let y = p[1]
+      let x2 = x*Math.cos(angle) - y*Math.sin(angle)
+      let y2 = x*Math.sin(angle) + y*Math.cos(angle)
+      return [x2, y2]
+    }
+
+    function find_depth(tree){
+      if(tree==null){
+        return 0
+      }
+      else if(tree.children.length>0){
+        let depths = []
+        let n_children = tree.children.length
+        for(let i=0;i<n_children;i++){
+          depths.push(find_depth(tree.children[i]))
+        }
+        console.log(depths)
+        return Math.max(...depths)+1
+      }
+      return 0
+    }
+
+    function updateTreeCoordinates(tree, leftBoundary, rightBoundary, originalCoordinates) {
+      //console.log("input", tree, leftBoundary, rightBoundary, originalCoordinates)
+      //console.log("Input", tree.name, tree.coordinates.x, tree.coordinates.y)
+      //console.log(tree.children[0].name, tree.children[0].coordinates.x, tree.children[0].coordinates.y)
+      // find depth
+      let depth = find_depth(tree)
+      
+      if(depth<=1){
+        // if depth <= 1
+
+        tree.coordinates = { ...leftBoundary[0].start };
+
+        // let root has n children
+        // draw the children proportionally
+        // find angle
+        let origin = { ...leftBoundary[0].start };
+        let p = { ...leftBoundary[0].end };
+        let q = { ...rightBoundary[0].end };
+        let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+        //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
+        let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
+        //alert("q_arr:"+q_arr[0] + "," +q_arr[1])
+        let angle = angle_rad(p_arr, q_arr)
+        //alert(angle*57.2958)
+        let n_children = tree.children.length
+        let angle_per_child = angle/n_children
+        //alert(angle_per_child*57.2958)
+
+        for(let i=0;i<n_children;i++){
+          // rotated_vector : boundary rotated to appropriate angle
+          let rotated_vector = rotate_vec_arr(p_arr, i*angle_per_child+angle_per_child/2)
+          //alert("rotation angle:"+((i*angle_per_child+angle_per_child/2)*57.2958))
+          //alert("rotated_vector:"+rotated_vector[0] + "," +rotated_vector[1])
+          //let angle_from_left = angle_rad(p_arr, rotated_vector)
+          //alert("angle_from_left:"+(angle_from_left*57.2958))
+          //rotated_vector = JS_vector(rotated_vector)
+          //alert(rotated_vector[0] + "," +rotated_vector[1])
+
+          // now rotate the tree edge instead of boundary 
+          let child = tree.children[i]
+          let e = { ...child.coordinates }; // e for edge
+          let e_arr = JS_vector([e.x-origin.x, e.y-origin.y])
+          //alert("e_arr:"+e_arr[0] + "," +e_arr[1])
+          //let e_arr = [e.x-origin.x, e.y-origin.y]
+          //alert("reached")
+          let e_angle = angle_rad(e_arr, rotated_vector)
+          //alert(e_angle*57.2958)
+          let e_rotated_vector = rotate_vec_arr(e_arr, e_angle)
+          //let e_angle_from_left = angle_rad(p_arr, e_rotated_vector)
+          //alert(e_angle_from_left*57.2958) // expected 22.5, actual 31
+          e_rotated_vector = JS_vector(e_rotated_vector) 
+          //alert(e_rotated_vector[0] + "," +e_rotated_vector[1])
+
+          child.coordinates = {
+              x: tree.coordinates.x + e_rotated_vector[0],
+              y: tree.coordinates.y + e_rotated_vector[1]
+            };
+        }
+      }
+      else if(tree.children.length==1){
+        // draw that single child
+        tree.coordinates = { ...leftBoundary[0].start };
+
+        // let root has n children
+        // draw the children proportionally
+        // find angle
+        let origin = { ...leftBoundary[0].start };
+        let p = { ...leftBoundary[0].end };
+        let q = { ...rightBoundary[0].end };
+        let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+        //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
+        let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
+        let angle = angle_rad(p_arr, q_arr)
+        //alert(angle*57.2958)
+        let angle_per_child = angle
+        //alert(angle_per_child*57.2958)
+
+        let rotated_vector = rotate_vec_arr(p_arr, angle_per_child/2)
+
+        // now rotate the tree edge instead of boundary 
+        let child = tree.children[0]
+        let e = { ...child.coordinates }; // e for edge
+        let e_arr = JS_vector([e.x-origin.x, e.y-origin.y])
+
+        let e_angle = angle_rad(e_arr, rotated_vector)
+        let e_rotated_vector = rotate_vec_arr(e_arr, e_angle)
+        e_rotated_vector = JS_vector(e_rotated_vector)
+
+        child.coordinates = {
+          x: tree.coordinates.x + e_rotated_vector[0],
+          y: tree.coordinates.y + e_rotated_vector[1]
+        };
+
+        //alert(p_arr[0] + ',' + p_arr[1] + ',' + e_rotated_vector[0] + ',' + e_rotated_vector[1])
+
+        // compute a parpendicular line
+        // find out the intersection with a boundary line
+        e_rotated_vector = JS_vector(e_rotated_vector)
+        let e_norm = norm(e_rotated_vector)
+        let e_unit = [e_rotated_vector[0]/e_norm, e_rotated_vector[1]/e_norm]
+        let p_proj = dot_prod(p_arr, e_unit)
+        //alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+
+        let i = 1
+        while((p_proj-e_norm)<0){
+          //alert("here")
+          e_norm = e_norm - p_proj
+          origin = { ...leftBoundary[i].start }
+          p = { ...leftBoundary[i].end }
+          p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+          p_proj = dot_prod(p_arr, e_unit)
+          //alert(p_proj + ',' + e_norm + ',' + (p_proj-e_norm))
+          i += 1
+        }
+
+        let tranlate = {
+          x: child.coordinates.x - originalCoordinates.get(child).x,
+          y: child.coordinates.y - originalCoordinates.get(child).y
+        }
+
+        let newRoot = {
+          name: child.name,
+          //coordinates: { x: 580, y: 150 },
+          //coordinates: originalCoordinates.get(child),
+          coordinates: child.coordinates,
+          children: child.children
+        };
+        for(let k=0;k<newRoot.children.length;k=k+1){
+          newRoot.children[k].coordinates.x = newRoot.children[k].coordinates.x + tranlate.x
+          newRoot.children[k].coordinates.y = newRoot.children[k].coordinates.y + tranlate.y
+        }
+        // update the boundary
+        let newLeftBoundary = [
+          { start: { x: child.coordinates.x, y: child.coordinates.y }, end: leftBoundary[i-1].end }
+        ];
+        let newRightBoundary = [
+          { start: { x: child.coordinates.x, y: child.coordinates.y }, end: rightBoundary[i-1].end }
+        ];
+
+        //console.log("recursion", newRoot, newLeftBoundary, newRightBoundary, originalCoordinates)
+        
+        updateTreeCoordinates(newRoot, newLeftBoundary, newRightBoundary, originalCoordinates)
+
+        
+      }
+      else{
+        // recursively find the solution
+
+        tree.coordinates = { ...leftBoundary[0].start };
+
+        // let root has n children
+        // draw the children proportionally
+        // find angle
+        let origin = { ...leftBoundary[0].start };
+        let p = { ...leftBoundary[0].end };
+        let q = { ...rightBoundary[0].end };
+        let p_arr = JS_vector([p.x-origin.x, p.y-origin.y])
+        //alert("p_arr:"+p_arr[0] + "," +p_arr[1])
+        let q_arr = JS_vector([q.x-origin.x, q.y-origin.y])
+        //alert("q_arr:"+q_arr[0] + "," +q_arr[1])
+        let angle = angle_rad(p_arr, q_arr)
+        //alert(angle*57.2958)
+        let n_children = tree.children.length
+        let angle_per_child = angle/n_children
+        //alert(angle_per_child*57.2958)
+
+        // find height of the boundary region
+        let heights = []
+        let leftPoints = []
+        let prev_d = 0
+        for(var i=0;i<leftBoundary.length;i++){
+          let d = distance(leftBoundary[i].start.x, leftBoundary[i].start.y,
+            leftBoundary[i].end.x, leftBoundary[i].end.y
+          )
+          leftPoints.push([1, d+prev_d])
+          prev_d = d
+        }
+        let rightPoints = []
+        prev_d = 0
+        for(var i=0;i<rightBoundary.length;i++){
+          let d = distance(rightBoundary[i].start.x, rightBoundary[i].start.y,
+            rightBoundary[i].end.x, rightBoundary[i].end.y
+          )
+          rightPoints.push([2, d+prev_d])
+          prev_d = d
+        }
+        console.log(leftPoints, rightPoints)
+        // sort the points based on the distance
+        // run a bfs to find the number of vertices from each subtree in a region
+        // split the region proportionally
+        // for each region recursively solve it
+
+        // place the current node in appropriate length
+        /*const svg = document.getElementById("treeSvg");
+        svg.innerHTML = "";
+
+        const createSVGElement = (type, attrs) => {
+        const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+        for (let attr in attrs) {
+            elem.setAttribute(attr, attrs[attr]);
+        }
+        return elem;
+        };
+
+        svg.appendChild(createSVGElement("line", {
+            x1: tree.coordinates.x,
+            y1: tree.coordinates.y,
+            x2: tree.coordinates.x,
+            y2: tree.coordinates.y+100,
+            stroke: 'gray',
+            "stroke-width": 2
+        }))*/
+
+        // add nodes incrementally
+        function get_nodes_recur(parent, tree, nodes, links){
+          var cur = {name:tree.name, id:nodes.length, index:nodes.length}
+          nodes.push(cur)
+          if(parent!=null){
+            links.push({source:parent.id, target:cur.id})
+          }
+          for(var i=0;i<tree.children.length;i++){
+            get_nodes_recur(cur, tree.children[i], nodes, links)
+          }
+          return [nodes, links]
+        }
+        function get_nodes(tree){
+          return get_nodes_recur(null, tree, [], [])
+        }
+
+        var nodes = []
+        var links = []
+
+        var svg = d3.select("#treeSvg")
+        var width = svg.node().getBoundingClientRect().width;
+        var height = svg.node().getBoundingClientRect().height;
+
+        var simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(200))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // Create the links (edges)
+        //var link = svg.selectAll(".link")
+            /*.data(links)
+            .enter().append("line")
+            .attr("class", "link");*/
+
+        // Create the nodes
+        //var node = svg.selectAll(".node")
+            /*.data(nodes)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 4);*/
+
+        /*console.log(node)
+        // Fix position for a specific node
+        node.forEach(function(d) {
+          if (d.fixed) {
+            d.fx = d.x;  // Fix the x position
+            d.fy = d.y;  // Fix the y position
+          }
+        });*/
+
+        // Update the positions of the nodes and links on each tick of the simulation
+        /*simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        });*/
+
+        console.log(tree)
+        var result = get_nodes(tree)
+        var allNodes = result[0]
+        var allLinks = result[1]
+        //nodes[0].fixed = true
+        allNodes[0].fx = tree.coordinates.x
+        allNodes[0].fy = tree.coordinates.y
+        console.log(allNodes)
+        console.log(allLinks)
+
+        var endInd = 0
+
+        // Function to add a new node and edge
+        function addNode() {
+
+            console.log(allNodes.slice(0, endInd+1))
+
+            const newNode = allNodes[endInd]
+            nodes.push(newNode);
+            if(endInd>0){
+              const newLink = allLinks[endInd-1]
+              links.push(newLink);
+            }
+
+            // Restart the simulation with the new nodes and links
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+
+            var link = svg.selectAll(".link").data(links).exit().remove();
+            var node = svg.selectAll(".node").data(nodes).exit().remove();
+
+            // Rebind the new nodes and links to the DOM
+            link.enter().append("line").attr("class", "link");
+            node.enter().append("circle").attr("class", "node").attr("r", 20);
+
+            simulation.alpha(1).restart();
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+            });
+
+            endInd += 1
+        }
+
+        // Add new node and edge every 3 seconds (for demo purposes)
+        setInterval(addNode, 3000);
+
+        /*var g = d3.select("#treeSvg")
+          .append("g")
+          .attr('id', 'treeLayout')
+
+          var lines = g.selectAll('line')
+          .data([{x1: tree.coordinates.x,
+              y1: tree.coordinates.y,
+              x2: tree.coordinates.x,
+              y2: tree.coordinates.y+100,
+              stroke: 'gray',
+              "stroke-width": 2}])
+          .enter()
+          .append('line')
+          .attr('x1', d => d.x1)
+          .attr('y1', d => d.y1)
+          .attr('x2', d => d.x2)
+          .attr('y2', d => d.y2)
+          .style('stroke', 'gray')
+          .style("stroke-width", 2)
+          //console.log(lines.node())*/
+        
+
+        // check whether there is a crossing or not
+
+
+      }
+      
+    }
+
+    function rotateVector(x, y, angle) {
+      return {
+        x: x * Math.cos(angle) - y * Math.sin(angle),
+        y: x * Math.sin(angle) + y * Math.cos(angle)
+      };
+    }
+
+    function midpoint(segment) {
+      return {
+        x: (segment.start.x + segment.end.x) / 2,
+        y: (segment.start.y + segment.end.y) / 2
+      };
+    }
+
+    function drawTree(origin, leftBoundary, rightBoundary, subtree) {
+      const svg = document.getElementById("treeSvg");
+      //svg.innerHTML = ""; // Clear previous drawing
+
+      const createSVGElement = (type, attrs) => {
+        const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+        for (let attr in attrs) {
+          elem.setAttribute(attr, attrs[attr]);
+        }
+        return elem;
+      };
+
+      // Draw boundaries
+      function drawLines(boundary, color) {
+        for (const segment of boundary) {
+          svg.appendChild(createSVGElement("line", {
+            x1: segment.start.x,
+            y1: segment.start.y,
+            x2: segment.end.x,
+            y2: segment.end.y,
+            stroke: color,
+            "stroke-width": 2
+          }));
+        }
+      }
+
+      drawLines(leftBoundary, "green");
+      drawLines(rightBoundary, "blue");
+
+      // Draw subtree
+      function drawSubtree(node) {
+        svg.appendChild(createSVGElement("circle", {
+          cx: node.coordinates.x,
+          cy: node.coordinates.y,
+          r: 4,
+          fill: "black"
+        }));
+        svg.appendChild(createSVGElement("text", {
+          x: node.coordinates.x + 5,
+          y: node.coordinates.y - 5
+        })).textContent = node.name;
+
+        if (node.children) {
+          for (const child of node.children) {
+            svg.appendChild(createSVGElement("line", {
+              x1: node.coordinates.x,
+              y1: node.coordinates.y,
+              x2: child.coordinates.x,
+              y2: child.coordinates.y,
+              stroke: "gray",
+              "stroke-dasharray": "3,3"
+            }));
+            drawSubtree(child);
+          }
+        }
+      }
+
+      drawSubtree(subtree);
+    }
+
+    // Initial draw
+    drawTree(origin, leftBoundary, rightBoundary, subtree);
+  </script>
+</body>
+</html>
