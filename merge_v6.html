@@ -618,6 +618,11 @@
 
         // Function to add a new node and edge
         function addNode() {
+            if (endInd >= allNodes.length) {
+                clearInterval(intervalID)
+                console.log("All nodes added.");
+                return;
+            }
 
             console.log(allNodes.slice(0, endInd+1))
 
@@ -628,17 +633,22 @@
               links.push(newLink);
             }
 
-            // Restart the simulation with the new nodes and links
-            simulation.nodes(nodes);
-            simulation.force("link").links(links);
+            var link = svg.selectAll(".link").data(links);
+            link.exit().remove();
+            link = link.enter().append("line").attr("class", "link").merge(link);
 
-            var link = svg.selectAll(".link").data(links).exit().remove();
-            var node = svg.selectAll(".node").data(nodes).exit().remove();
+            var node = svg.selectAll(".node").data(nodes);
+            node.exit().remove();
+            node = node.enter().append("circle").attr("class", "node").attr("r", 3).merge(node);
 
             // Rebind the new nodes and links to the DOM
             link.enter().append("line").attr("class", "link");
-            node.enter().append("circle").attr("class", "node").attr("r", 20);
+            node.enter().append("circle").attr("class", "node").attr("r", 3);
 
+
+            // Restart the simulation with the new nodes and links
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
             simulation.alpha(1).restart();
 
             simulation.on("tick", () => {
@@ -657,7 +667,7 @@
         }
 
         // Add new node and edge every 3 seconds (for demo purposes)
-        setInterval(addNode, 3000);
+        var intervalID = setInterval(addNode, 500);
 
         /*var g = d3.select("#treeSvg")
           .append("g")
