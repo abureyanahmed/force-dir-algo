@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>D3 Click to Add Points and Close Shape</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    svg {
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+
+    .line {
+      fill: none;
+      stroke: #333;
+      stroke-width: 2;
+    }
+
+    circle {
+      fill: steelblue;
+    }
+
+    button {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h3>Click to add points, then close the shape</h3>
+<button id="closeBtn">Close Shape</button>
+
+<br />
+
+<svg width="600" height="400"></svg>
+
+<script>
+  const svg = d3.select("svg");
+
+  const points = [];
+  let isClosed = false;
+
+  const path = svg.append("path")
+    .attr("class", "line");
+
+  const line = d3.line()
+    .x(d => d.x)
+    .y(d => d.y);
+
+  function update() {
+    const drawPoints = isClosed && points.length > 1
+      ? [...points, points[0]]
+      : points;
+
+    path.attr("d", line(drawPoints));
+
+    svg.selectAll("circle")
+      .data(points)
+      .join("circle")
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y)
+      .attr("r", 5);
+  }
+
+  svg.on("click", function (event) {
+    if (isClosed) return; // prevent adding points after closing
+
+    const [x, y] = d3.pointer(event);
+    points.push({ x, y });
+    update();
+  });
+
+  d3.select("#closeBtn").on("click", function () {
+    if (points.length < 3) return; // need at least 3 points to close
+    isClosed = true;
+    update();
+  });
+</script>
+
+</body>
+</html>
