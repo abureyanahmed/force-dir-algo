@@ -1,7 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Force-Directed Graph</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
 const nodes = [
-  { id: 0, x: Math.random(), y: Math.random(), vx: 0, vy: 0 },
-  { id: 1, x: Math.random(), y: Math.random(), vx: 0, vy: 0 },
-  { id: 2, x: Math.random(), y: Math.random(), vx: 0, vy: 0 }
+  { id: 0, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 1, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 2, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 }
 ];
 
 const links = [
@@ -12,7 +37,7 @@ const links = [
 const width = 800;
 const height = 600;
 const area = width * height;
-const k = Math.sqrt(area / nodes.length); // ideal distance
+const k = Math.sqrt(area / nodes.length);
 
 let temperature = width / 10;
 const cooling = 0.95;
@@ -32,7 +57,7 @@ function step() {
     v.vy = 0;
   }
 
-  // Repulsion (node–node)
+  // Repulsion
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const v = nodes[i];
@@ -53,7 +78,7 @@ function step() {
     }
   }
 
-  // Attraction (edges)
+  // Attraction
   for (const e of links) {
     const v = nodes[e.source];
     const u = nodes[e.target];
@@ -72,27 +97,18 @@ function step() {
     u.vy += dy * force;
   }
 
-  // Move nodes with temperature limit
+  // Move nodes
   for (const v of nodes) {
     const disp = Math.hypot(v.vx, v.vy) || 0.01;
     v.x += (v.vx / disp) * Math.min(disp, temperature);
     v.y += (v.vy / disp) * Math.min(disp, temperature);
 
-    // Keep inside bounds
     v.x = Math.min(width, Math.max(0, v.x));
     v.y = Math.min(height, Math.max(0, v.y));
   }
 
   temperature *= cooling;
 }
-
-for (let i = 0; i < 300; i++) {
-  step();
-}
-
-console.log(nodes);
-
-<canvas id="graph" width="800" height="600"></canvas>
 
 const canvas = document.getElementById("graph");
 const ctx = canvas.getContext("2d");
@@ -122,9 +138,13 @@ function drawCanvas() {
 }
 
 function animate() {
-  step();        // force simulation
-  drawCanvas();  // render
+  step();
+  drawCanvas();
   requestAnimationFrame(animate);
 }
 
 animate();
+</script>
+
+</body>
+</html>

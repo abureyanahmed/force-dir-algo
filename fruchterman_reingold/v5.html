@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FR Graph with setInterval Control</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 10px;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+      display: block;
+    }
+    label {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <label>
+    Graph:
+    <select id="graphType">
+      <optgroup label="Paths">
+        <option value="path3">path3</option>
+        <option value="path5">path5</option>
+        <option value="path10">path10</option>
+        <option value="path20">path20</option>
+      </optgroup>
+      <optgroup label="Cycles">
+        <option value="cycle3">cycle3</option>
+        <option value="cycle5">cycle5</option>
+        <option value="cycle10">cycle10</option>
+        <option value="cycle20">cycle20</option>
+      </optgroup>
+    </select>
+  </label>
+
+  <label>
+    Period (ms):
+    <input type="number" id="periodInput" value="16" min="1" step="1">
+  </label>
+
+  <button id="runBtn">Run</button>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const width = 800;
+const height = 600;
+const area = width * height;
+
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [];
+let links = [];
+
+let k;
+let temperature;
+const cooling = 0.95;
+
+let intervalId = null;
+let period = 16;
+
+// ----------------- Graph creation -----------------
+
+function createNodes(n) {
+  nodes = [];
+  for (let i = 0; i < n; i++) {
+    nodes.push({
+      id: i,
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: 0,
+      vy: 0
+    });
+  }
+  k = Math.sqrt(area / nodes.length);
+  temperature = width / 10;
+}
+
+function createLinks(type) {
+  links = [];
+
+  const match = type.match(/(path|cycle)(\d+)/);
+  if (!match) return;
+
+  const kind = match[1];
+  const n = parseInt(match[2]);
+
+  if (kind === "path") {
+    for (let i = 0; i < n - 1; i++) {
+      links.push({ source: i, target: i + 1 });
+    }
+  }
+
+  if (kind === "cycle") {
+    for (let i = 0; i < n; i++) {
+      links.push({
+        source: i,
+        target: (i + 1) % n
+      });
+    }
+  }
+}
+
+// ----------------- FR forces -----------------
+
+function repulsiveForce(d) {
+  return (k * k) / d;
+}
+
+function attractiveForce(d) {
+  return (d * d) / k;
+}
+
+function step() {
+  for (const v of nodes) {
+    v.vx = 0;
+    v.vy = 0;
+  }
+
+  // Repulsion
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const v = nodes[i];
+      const u = nodes[j];
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let dist = Math.hypot(dx, dy) || 0.01;
+
+      const f = repulsiveForce(dist);
+      dx /= dist;
+      dy /= dist;
+
+      v.vx += dx * f;
+      v.vy += dy * f;
+      u.vx -= dx * f;
+      u.vy -= dy * f;
+    }
+  }
+
+  // Attraction
+  for (const e of links) {
+    const v = nodes[e.source];
+    const u = nodes[e.target];
+
+    let dx = v.x - u.x;
+    let dy = v.y - u.y;
+    let dist = Math.hypot(dx, dy) || 0.01;
+
+    const f = attractiveForce(dist);
+    dx /= dist;
+    dy /= dist;
+
+    v.vx -= dx * f;
+    v.vy -= dy * f;
+    u.vx += dx * f;
+    u.vy += dy * f;
+  }
+
+  // Move nodes
+  for (const v of nodes) {
+    const disp = Math.hypot(v.vx, v.vy) || 0.01;
+    v.x += (v.vx / disp) * Math.min(disp, temperature);
+    v.y += (v.vy / disp) * Math.min(disp, temperature);
+
+    v.x = Math.min(width, Math.max(0, v.x));
+    v.y = Math.min(height, Math.max(0, v.y));
+  }
+
+  temperature *= cooling;
+}
+
+// ----------------- Drawing -----------------
+
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+  for (const e of links) {
+    const s = nodes[e.source];
+    const t = nodes[e.target];
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#4682b4";
+  for (const v of nodes) {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ----------------- Animation control -----------------
+
+function startAnimation() {
+  stopAnimation();
+  intervalId = setInterval(() => {
+    step();
+    draw();
+  }, period);
+}
+
+function stopAnimation() {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+// ----------------- UI -----------------
+
+document.getElementById("runBtn").addEventListener("click", () => {
+  const type = document.getElementById("graphType").value;
+  const n = parseInt(type.match(/\d+/)[0]);
+
+  stopAnimation();
+  createNodes(n);
+  createLinks(type);
+  draw();
+});
+
+document.getElementById("startBtn").addEventListener("click", startAnimation);
+document.getElementById("stopBtn").addEventListener("click", stopAnimation);
+
+document.getElementById("periodInput").addEventListener("change", (e) => {
+  period = Math.max(1, parseInt(e.target.value));
+  if (intervalId !== null) {
+    startAnimation(); // restart with new period
+  }
+});
+
+// initial graph
+createNodes(3);
+createLinks("path3");
+draw();
+</script>
+
+</body>
+</html>

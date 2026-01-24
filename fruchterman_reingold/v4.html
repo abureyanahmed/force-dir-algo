@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FR Graph: Paths and Cycles</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 10px;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <label>
+    Graph type:
+    <select id="graphType">
+      <optgroup label="Paths">
+        <option value="path3">path3</option>
+        <option value="path5">path5</option>
+        <option value="path10">path10</option>
+        <option value="path20">path20</option>
+        <option value="path50">path50</option>
+        <option value="path100">path100</option>
+      </optgroup>
+      <optgroup label="Cycles">
+        <option value="cycle3">cycle3</option>
+        <option value="cycle5">cycle5</option>
+        <option value="cycle10">cycle10</option>
+        <option value="cycle20">cycle20</option>
+        <option value="cycle50">cycle50</option>
+        <option value="cycle100">cycle100</option>
+      </optgroup>
+    </select>
+  </label>
+  <button id="runBtn">Run</button>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const width = 800;
+const height = 600;
+const area = width * height;
+
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [];
+let links = [];
+
+let k;
+let temperature;
+const cooling = 0.95;
+
+function createNodes(n) {
+  nodes = [];
+  for (let i = 0; i < n; i++) {
+    nodes.push({
+      id: i,
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: 0,
+      vy: 0
+    });
+  }
+  k = Math.sqrt(area / nodes.length);
+  temperature = width / 10;
+}
+
+function createLinks(type) {
+  links = [];
+
+  // extract number: path10 → 10, cycle50 → 50
+  const match = type.match(/(path|cycle)(\d+)/);
+  if (!match) return;
+
+  const kind = match[1];          // "path" or "cycle"
+  const n = parseInt(match[2]);   // number of vertices
+
+  if (kind === "path") {
+    // n vertices → n-1 edges
+    for (let i = 0; i < n - 1; i++) {
+      links.push({ source: i, target: i + 1 });
+    }
+  }
+
+  if (kind === "cycle") {
+    // n vertices → n edges
+    for (let i = 0; i < n; i++) {
+      links.push({
+        source: i,
+        target: (i + 1) % n
+      });
+    }
+  }
+}
+
+function repulsiveForce(d) {
+  return (k * k) / d;
+}
+
+function attractiveForce(d) {
+  return (d * d) / k;
+}
+
+function step() {
+  // reset forces
+  for (const v of nodes) {
+    v.vx = 0;
+    v.vy = 0;
+  }
+
+  // repulsion
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const v = nodes[i];
+      const u = nodes[j];
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let dist = Math.hypot(dx, dy) || 0.01;
+
+      const f = repulsiveForce(dist);
+      dx /= dist;
+      dy /= dist;
+
+      v.vx += dx * f;
+      v.vy += dy * f;
+      u.vx -= dx * f;
+      u.vy -= dy * f;
+    }
+  }
+
+  // attraction
+  for (const e of links) {
+    const v = nodes[e.source];
+    const u = nodes[e.target];
+
+    let dx = v.x - u.x;
+    let dy = v.y - u.y;
+    let dist = Math.hypot(dx, dy) || 0.01;
+
+    const f = attractiveForce(dist);
+    dx /= dist;
+    dy /= dist;
+
+    v.vx -= dx * f;
+    v.vy -= dy * f;
+    u.vx += dx * f;
+    u.vy += dy * f;
+  }
+
+  // move nodes
+  for (const v of nodes) {
+    const disp = Math.hypot(v.vx, v.vy) || 0.01;
+    v.x += (v.vx / disp) * Math.min(disp, temperature);
+    v.y += (v.vy / disp) * Math.min(disp, temperature);
+
+    v.x = Math.min(width, Math.max(0, v.x));
+    v.y = Math.min(height, Math.max(0, v.y));
+  }
+
+  temperature *= cooling;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+
+  // links
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+  for (const e of links) {
+    const s = nodes[e.source];
+    const t = nodes[e.target];
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+  }
+  ctx.stroke();
+
+  // nodes
+  ctx.fillStyle = "#4682b4";
+  for (const v of nodes) {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function animate() {
+  step();
+  draw();
+  requestAnimationFrame(animate);
+}
+
+// UI
+document.getElementById("runBtn").addEventListener("click", () => {
+  const type = document.getElementById("graphType").value;
+  const n = parseInt(type.match(/\d+/)[0]);
+  createNodes(n);
+  createLinks(type);
+});
+
+// initial graph
+createNodes(3);
+createLinks("path3");
+animate();
+</script>
+
+</body>
+</html>
