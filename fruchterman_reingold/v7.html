@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FR Graph – Create Graph Mode</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 10px;
+    }
+    #controls, #createControls {
+      margin-bottom: 10px;
+    }
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+      display: block;
+    }
+    label {
+      margin-right: 10px;
+    }
+    input, select, button {
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <label>
+    Graph:
+    <select id="graphType">
+      <optgroup label="Paths">
+        <option value="path5">path5</option>
+        <option value="path10">path10</option>
+      </optgroup>
+      <optgroup label="Cycles">
+        <option value="cycle5">cycle5</option>
+        <option value="cycle10">cycle10</option>
+      </optgroup>
+      <optgroup label="Trees">
+        <option value="btree4">binary tree (h=4)</option>
+        <option value="ktree3_4">3-ary tree (h=4)</option>
+      </optgroup>
+      <optgroup label="Custom">
+        <option value="custom">Create graph</option>
+      </optgroup>
+    </select>
+  </label>
+
+  <label>
+    Period (ms):
+    <input type="number" id="periodInput" value="16" min="1">
+  </label>
+
+  <label>
+    Cooling:
+    <input type="number" id="coolingInput" value="0.95" min="0" max="1" step="0.01">
+  </label>
+
+  <button id="runBtn">Run</button>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+</div>
+
+<div id="createControls" style="display:none;">
+  <strong>Create graph</strong><br>
+
+  <div>
+    <button id="addNodeBtn">Add node</button>
+    x: <input type="number" id="nodeX" placeholder="optional">
+    y: <input type="number" id="nodeY" placeholder="optional">
+  </div>
+
+  <div>
+    <button id="addEdgeBtn">Add edge</button>
+    source:
+    <select id="edgeSource"></select>
+    target:
+    <select id="edgeTarget"></select>
+  </div>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const width = 800;
+const height = 600;
+const area = width * height;
+
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [];
+let links = [];
+
+let k;
+let temperature;
+let cooling = 0.95;
+
+let intervalId = null;
+let period = 16;
+
+let customMode = false;
+let showIds = false;
+
+// ----------------- Helpers -----------------
+
+function resetSimulation() {
+  stopAnimation();
+  temperature = width / 10;
+}
+
+function updateEdgeSelectors() {
+  const src = document.getElementById("edgeSource");
+  const tgt = document.getElementById("edgeTarget");
+  src.innerHTML = "";
+  tgt.innerHTML = "";
+
+  for (const v of nodes) {
+    const o1 = document.createElement("option");
+    o1.value = v.id;
+    o1.textContent = v.id;
+    const o2 = o1.cloneNode(true);
+    src.appendChild(o1);
+    tgt.appendChild(o2);
+  }
+}
+
+// ----------------- Graph creation -----------------
+
+function createNodes(n) {
+  nodes = [];
+  for (let i = 0; i < n; i++) {
+    nodes.push({
+      id: i,
+      x: Math.random() * width,
+      y: Math.random() * height
+    });
+  }
+  k = Math.sqrt(area / nodes.length);
+  temperature = width / 10;
+}
+
+function createLinks(type) {
+  links = [];
+
+  let m = type.match(/(path|cycle)(\d+)/);
+  if (m) {
+    const kind = m[1];
+    const n = parseInt(m[2]);
+    for (let i = 0; i < n - (kind === "path" ? 1 : 0); i++) {
+      links.push({ source: i, target: (i + 1) % n });
+    }
+    return;
+  }
+
+  m = type.match(/btree(\d+)/);
+  if (m) {
+    const h = parseInt(m[1]);
+    const n = Math.pow(2, h) - 1;
+    for (let i = 0; i < n; i++) {
+      const l = 2 * i + 1, r = 2 * i + 2;
+      if (l < n) links.push({ source: i, target: l });
+      if (r < n) links.push({ source: i, target: r });
+    }
+    return;
+  }
+
+  m = type.match(/ktree(\d+)_(\d+)/);
+  if (m) {
+    const kary = parseInt(m[1]);
+    const h = parseInt(m[2]);
+    let n = 0;
+    for (let i = 0; i < h; i++) n += Math.pow(kary, i);
+    for (let i = 0; i < n; i++) {
+      for (let j = 1; j <= kary; j++) {
+        const c = kary * i + j;
+        if (c < n) links.push({ source: i, target: c });
+      }
+    }
+  }
+}
+
+// ----------------- FR forces -----------------
+
+function repulsiveForce(d) {
+  return (k * k) / d;
+}
+
+function attractiveForce(d) {
+  return (d * d) / k;
+}
+
+// ----------------- Sequential step -----------------
+
+function step() {
+  for (let i = 0; i < nodes.length; i++) {
+    const v = nodes[i];
+    let fx = 0, fy = 0;
+
+    for (let j = 0; j < nodes.length; j++) {
+      if (i === j) continue;
+      const u = nodes[j];
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = repulsiveForce(d);
+      fx += (dx / d) * f;
+      fy += (dy / d) * f;
+    }
+
+    for (const e of links) {
+      let u = null;
+      if (e.source === i) u = nodes[e.target];
+      else if (e.target === i) u = nodes[e.source];
+      else continue;
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = attractiveForce(d);
+      fx -= (dx / d) * f;
+      fy -= (dy / d) * f;
+    }
+
+    const disp = Math.hypot(fx, fy) || 0.01;
+    v.x += (fx / disp) * Math.min(disp, temperature);
+    v.y += (fy / disp) * Math.min(disp, temperature);
+
+    v.x = Math.min(width, Math.max(0, v.x));
+    v.y = Math.min(height, Math.max(0, v.y));
+  }
+
+  temperature *= cooling;
+}
+
+// ----------------- Drawing -----------------
+
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+  for (const e of links) {
+    const s = nodes[e.source];
+    const t = nodes[e.target];
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#4682b4";
+  ctx.font = "12px sans-serif";
+
+  for (const v of nodes) {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (showIds) {
+      ctx.fillText(v.id, v.x + 6, v.y - 6);
+    }
+  }
+}
+
+// ----------------- Animation -----------------
+
+function startAnimation() {
+  stopAnimation();
+  intervalId = setInterval(() => {
+    step();
+    draw();
+  }, period);
+}
+
+function stopAnimation() {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+// ----------------- UI -----------------
+
+document.getElementById("graphType").addEventListener("change", e => {
+  customMode = e.target.value === "custom";
+  document.getElementById("createControls").style.display = customMode ? "block" : "none";
+});
+
+document.getElementById("addNodeBtn").addEventListener("click", () => {
+  const x = parseFloat(nodeX.value);
+  const y = parseFloat(nodeY.value);
+  const id = nodes.length;
+
+  nodes.push({
+    id,
+    x: isNaN(x) ? Math.random() * width : x,
+    y: isNaN(y) ? Math.random() * height : y
+  });
+
+  k = Math.sqrt(area / nodes.length);
+  updateEdgeSelectors();
+  draw();
+});
+
+document.getElementById("addEdgeBtn").addEventListener("click", () => {
+  const s = parseInt(edgeSource.value);
+  const t = parseInt(edgeTarget.value);
+  if (s !== t) links.push({ source: s, target: t });
+  draw();
+});
+
+document.getElementById("runBtn").addEventListener("click", () => {
+  stopAnimation();
+
+  if (!customMode) {
+    const type = graphType.value;
+    let n;
+
+    if (type.match(/(path|cycle)/)) n = parseInt(type.match(/\d+/)[0]);
+    else if (type.startsWith("btree")) n = Math.pow(2, parseInt(type.match(/\d+/)[0])) - 1;
+    else {
+      const [, kary, h] = type.match(/ktree(\d+)_(\d+)/);
+      n = 0;
+      for (let i = 0; i < h; i++) n += Math.pow(kary, i);
+    }
+
+    createNodes(n);
+    createLinks(type);
+  }
+
+  showIds = false;
+  document.getElementById("createControls").style.display = "none";
+  resetSimulation();
+  draw();
+});
+
+document.getElementById("startBtn").addEventListener("click", startAnimation);
+document.getElementById("stopBtn").addEventListener("click", stopAnimation);
+
+document.getElementById("periodInput").addEventListener("change", e => {
+  period = Math.max(1, parseInt(e.target.value));
+  if (intervalId) startAnimation();
+});
+
+document.getElementById("coolingInput").addEventListener("change", e => {
+  cooling = Math.min(1, Math.max(0, parseFloat(e.target.value)));
+});
+
+// initial
+showIds = true;
+draw();
+</script>
+
+</body>
+</html>
