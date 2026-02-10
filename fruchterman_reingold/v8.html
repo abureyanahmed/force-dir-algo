@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>FR Graph – Create Graph</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 10px;
+  }
+
+  #controls {
+    margin-bottom: 10px;
+  }
+
+  canvas {
+    background: white;
+    border: 1px solid #ccc;
+    display: block;
+  }
+
+  input, button, select {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="controls">
+  <strong>Bounding region</strong><br>
+  x: <input type="number" id="rx" value="50">
+  y: <input type="number" id="ry" value="50">
+  w: <input type="number" id="rw" value="700">
+  h: <input type="number" id="rh" value="500">
+  <button id="applyRegion">Apply</button>
+  <br><br>
+
+  <strong>Create graph</strong><br>
+  <button id="addNodeBtn">Add node</button>
+  x: <input type="number" id="nodeX" placeholder="optional">
+  y: <input type="number" id="nodeY" placeholder="optional">
+  <br>
+
+  <button id="addEdgeBtn">Add edge</button>
+  source:
+  <select id="edgeSource"></select>
+  target:
+  <select id="edgeTarget"></select>
+  <br><br>
+
+  Period (ms):
+  <input type="number" id="periodInput" value="16" min="1">
+  Cooling:
+  <input type="number" id="coolingInput" value="0.95" min="0" max="1" step="0.01">
+
+  <br><br>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [];
+let links = [];
+
+let region = { x: 50, y: 50, w: 700, h: 500 };
+
+let intervalId = null;
+let period = 16;
+let cooling = 0.95;
+let temperature = 80;
+let k = 50;
+
+// ----------------- Helpers -----------------
+
+function clampToRegion(v) {
+  v.x = Math.min(region.x + region.w, Math.max(region.x, v.x));
+  v.y = Math.min(region.y + region.h, Math.max(region.y, v.y));
+}
+
+function randomInRegionX() {
+  return region.x + Math.random() * region.w;
+}
+
+function randomInRegionY() {
+  return region.y + Math.random() * region.h;
+}
+
+function updateEdgeSelectors() {
+  edgeSource.innerHTML = "";
+  edgeTarget.innerHTML = "";
+
+  for (const v of nodes) {
+    const o1 = document.createElement("option");
+    o1.value = v.id;
+    o1.textContent = v.id;
+    const o2 = o1.cloneNode(true);
+    edgeSource.appendChild(o1);
+    edgeTarget.appendChild(o2);
+  }
+}
+
+// ----------------- Forces -----------------
+
+function repulsiveForce(d) {
+  return (k * k) / d;
+}
+
+function attractiveForce(d) {
+  return (d * d) / k;
+}
+
+// ----------------- Simulation step -----------------
+
+function step() {
+  for (let i = 0; i < nodes.length; i++) {
+    const v = nodes[i];
+    let fx = 0, fy = 0;
+
+    for (let j = 0; j < nodes.length; j++) {
+      if (i === j) continue;
+      const u = nodes[j];
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = repulsiveForce(d);
+      fx += (dx / d) * f;
+      fy += (dy / d) * f;
+    }
+
+    for (const e of links) {
+      let u = null;
+      if (e.source === i) u = nodes[e.target];
+      else if (e.target === i) u = nodes[e.source];
+      else continue;
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = attractiveForce(d);
+      fx -= (dx / d) * f;
+      fy -= (dy / d) * f;
+    }
+
+    const disp = Math.hypot(fx, fy) || 0.01;
+    v.x += (fx / disp) * Math.min(disp, temperature);
+    v.y += (fy / disp) * Math.min(disp, temperature);
+
+    clampToRegion(v);
+  }
+
+  temperature *= cooling;
+}
+
+// ----------------- Drawing -----------------
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // draw region
+  ctx.strokeStyle = "#888";
+  ctx.strokeRect(region.x, region.y, region.w, region.h);
+
+  // edges
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+  for (const e of links) {
+    const s = nodes[e.source];
+    const t = nodes[e.target];
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+  }
+  ctx.stroke();
+
+  // nodes
+  ctx.fillStyle = "#4682b4";
+  ctx.font = "12px sans-serif";
+  for (const v of nodes) {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(v.id, v.x + 6, v.y - 6);
+  }
+}
+
+// ----------------- Animation -----------------
+
+function startAnimation() {
+  stopAnimation();
+  intervalId = setInterval(() => {
+    step();
+    draw();
+  }, period);
+}
+
+function stopAnimation() {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+// ----------------- UI -----------------
+
+applyRegion.onclick = () => {
+  region.x = +rx.value;
+  region.y = +ry.value;
+  region.w = +rw.value;
+  region.h = +rh.value;
+  draw();
+};
+
+addNodeBtn.onclick = () => {
+  const x = parseFloat(nodeX.value);
+  const y = parseFloat(nodeY.value);
+
+  const v = {
+    id: nodes.length,
+    x: isNaN(x) ? randomInRegionX() : x,
+    y: isNaN(y) ? randomInRegionY() : y
+  };
+
+  clampToRegion(v);
+  nodes.push(v);
+  k = Math.sqrt((region.w * region.h) / nodes.length);
+  updateEdgeSelectors();
+  draw();
+};
+
+addEdgeBtn.onclick = () => {
+  const s = +edgeSource.value;
+  const t = +edgeTarget.value;
+  if (s !== t) links.push({ source: s, target: t });
+  draw();
+};
+
+periodInput.onchange = e => {
+  period = Math.max(1, +e.target.value);
+  if (intervalId) startAnimation();
+};
+
+coolingInput.onchange = e => {
+  cooling = Math.min(1, Math.max(0, +e.target.value));
+};
+
+startBtn.onclick = startAnimation;
+stopBtn.onclick = stopAnimation;
+
+draw();
+</script>
+
+</body>
+</html>

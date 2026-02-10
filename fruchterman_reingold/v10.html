@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>FR Graph – Polygon Bounded</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 140px;
+    font-family: monospace;
+    margin-bottom: 8px;
+  }
+
+  button, input {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+
+  canvas {
+    background: white;
+    border: 1px solid #ccc;
+    cursor: crosshair;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="controls">
+  <strong>Polygon region</strong><br>
+  <button id="finishPolygon">Finish region</button>
+  <button id="clearPolygon">Clear region</button>
+
+  <br><br>
+
+  <strong>Graph input</strong><br>
+  <textarea id="graphInput" placeholder=
+"nodeA 200 200
+nodeB 300 250
+nodeC 350 200
+nodeA nodeB
+nodeB nodeC"></textarea>
+  <button id="loadGraph">Load graph</button>
+
+  <br><br>
+
+  Period:
+  <input type="number" id="periodInput" value="16">
+  Cooling:
+  <input type="number" id="coolingInput" value="0.95" step="0.01">
+
+  <br><br>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [];
+let links = [];
+let nodeIndex = new Map();
+
+let polygon = [];
+let polygonClosed = false;
+
+let intervalId = null;
+let period = 16;
+let cooling = 0.95;
+let temperature = 80;
+let k = 50;
+
+// ---------------- Geometry helpers ----------------
+
+function segmentsIntersect(a, b, c, d) {
+  function orient(p, q, r) {
+    return (q.x - p.x) * (r.y - p.y) -
+           (q.y - p.y) * (r.x - p.x);
+  }
+
+  const o1 = orient(a, b, c);
+  const o2 = orient(a, b, d);
+  const o3 = orient(c, d, a);
+  const o4 = orient(c, d, b);
+
+  return o1 * o2 < 0 && o3 * o4 < 0;
+}
+
+function moveCrossesPolygon(oldPos, newPos) {
+  if (!polygonClosed) return false;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const p1 = polygon[i];
+    const p2 = polygon[(i + 1) % polygon.length];
+    if (segmentsIntersect(oldPos, newPos, p1, p2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---------------- Forces ----------------
+
+function repulsiveForce(d) {
+  return (k * k) / d;
+}
+
+function attractiveForce(d) {
+  return (d * d) / k;
+}
+
+// ---------------- Simulation step ----------------
+
+function step() {
+  for (let i = 0; i < nodes.length; i++) {
+    const v = nodes[i];
+    const old = { x: v.x, y: v.y };
+
+    let fx = 0, fy = 0;
+
+    for (let j = 0; j < nodes.length; j++) {
+      if (i === j) continue;
+      const u = nodes[j];
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = repulsiveForce(d);
+      fx += (dx / d) * f;
+      fy += (dy / d) * f;
+    }
+
+    for (const e of links) {
+      let u = null;
+      if (e.source === i) u = nodes[e.target];
+      else if (e.target === i) u = nodes[e.source];
+      else continue;
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let d = Math.hypot(dx, dy) || 0.01;
+      const f = attractiveForce(d);
+      fx -= (dx / d) * f;
+      fy -= (dy / d) * f;
+    }
+
+    const disp = Math.hypot(fx, fy) || 0.01;
+    v.x += (fx / disp) * Math.min(disp, temperature);
+    v.y += (fy / disp) * Math.min(disp, temperature);
+
+    if (moveCrossesPolygon(old, v)) {
+      v.x = old.x;
+      v.y = old.y;
+    }
+  }
+
+  temperature *= cooling;
+}
+
+// ---------------- Drawing ----------------
+
+function drawPolygon() {
+  if (polygon.length === 0) return;
+
+  ctx.strokeStyle = "#444";
+  ctx.fillStyle = "rgba(200,200,200,0.15)";
+  ctx.beginPath();
+  ctx.moveTo(polygon[0].x, polygon[0].y);
+  for (let i = 1; i < polygon.length; i++) {
+    ctx.lineTo(polygon[i].x, polygon[i].y);
+  }
+  if (polygonClosed) {
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#000";
+  for (const p of polygon) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawPolygon();
+
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+  for (const e of links) {
+    const s = nodes[e.source];
+    const t = nodes[e.target];
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#4682b4";
+  ctx.font = "12px sans-serif";
+  for (const v of nodes) {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(v.id, v.x + 6, v.y - 6);
+  }
+}
+
+// ---------------- Parsing ----------------
+
+function loadGraphFromText(text) {
+  nodes = [];
+  links = [];
+  nodeIndex.clear();
+
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  let idx = 0;
+
+  for (const line of lines) {
+    const p = line.split(/\s+/);
+    if (p.length === 3) {
+      const [id, x, y] = p;
+      nodes.push({ id, x: +x, y: +y });
+      nodeIndex.set(id, idx++);
+    }
+  }
+
+  for (const line of lines) {
+    const p = line.split(/\s+/);
+    if (p.length === 2) {
+      const [a, b] = p;
+      if (nodeIndex.has(a) && nodeIndex.has(b)) {
+        links.push({
+          source: nodeIndex.get(a),
+          target: nodeIndex.get(b)
+        });
+      }
+    }
+  }
+
+  k = Math.sqrt((canvas.width * canvas.height) / Math.max(1, nodes.length));
+  temperature = canvas.width / 10;
+  draw();
+}
+
+// ---------------- UI ----------------
+
+canvas.addEventListener("click", e => {
+  if (polygonClosed) return;
+  const rect = canvas.getBoundingClientRect();
+  polygon.push({
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  });
+  draw();
+});
+
+finishPolygon.onclick = () => {
+  if (polygon.length >= 3) polygonClosed = true;
+  draw();
+};
+
+clearPolygon.onclick = () => {
+  polygon = [];
+  polygonClosed = false;
+  draw();
+};
+
+loadGraph.onclick = () => loadGraphFromText(graphInput.value);
+
+periodInput.onchange = e => {
+  period = Math.max(1, +e.target.value);
+  if (intervalId) start();
+};
+
+coolingInput.onchange = e => {
+  cooling = Math.min(1, Math.max(0, +e.target.value));
+};
+
+function start() {
+  stop();
+  intervalId = setInterval(() => {
+    step();
+    draw();
+  }, period);
+}
+
+function stop() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+startBtn.onclick = start;
+stopBtn.onclick = stop;
+
+draw();
+</script>
+
+</body>
+</html>
