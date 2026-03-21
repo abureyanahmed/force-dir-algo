@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FR Graph - Subtree Layout</title>
+<style>
+body{ font-family:sans-serif; background:#f5f5f5; margin:0; padding:10px; }
+textarea{ width:100%; height:140px; font-family:monospace; margin-bottom:8px; }
+button,input{ margin-right:5px; margin-bottom:5px; }
+canvas{ background:white; border:1px solid #ccc; cursor:crosshair; }
+</style>
+</head>
+<body>
+
+<div>
+<strong>Polygon region</strong><br>
+<button id="finishPolygon">Finish region</button>
+<button id="clearPolygon">Clear region</button>
+<br><br>
+
+<strong>Subtree selection</strong><br>
+<button id="selectNodeBtn">Select node</button>
+<button id="selectEdgesBtn">Select edges</button>
+<button id="clearSelection">Clear selection</button>
+<br><br>
+
+<strong>Graph input</strong><br>
+<textarea id="graphInput">
+A 200 200
+B 300 250
+C 350 200
+D 400 260
+E 300 350
+F 450 200
+A B
+B C
+C D
+B E
+C F
+</textarea>
+<button id="loadGraph">Load graph</button>
+<br><br>
+
+Period: <input type="number" id="periodInput" value="16">
+Cooling: <input type="number" id="coolingInput" value="0.95" step="0.01">
+<br><br>
+
+<button id="startBtn">Start</button>
+<button id="stopBtn">Stop</button>
+<button id="action1Btn">Action1</button>
+<button id="action2Btn">Action2</button>
+<button id="action3Btn">Action3</button>
+<button id="action4Btn">Action4</button>
+<button id="action5Btn">Action5</button>
+</div>
+
+<canvas id="graph" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+let nodes = [], links = [], nodeIndex = new Map();
+let polygon = [], polygonClosed = false;
+let intervalId = null, period = 16, cooling = 0.95, temperature = 80, k = 50;
+let rootNode = null, selectingNode = false, selectingEdges = false;
+let selectedEdges = new Set(), subtreeEdges = new Set(), movableNodes = new Set();
+
+//---------------- Geometry helpers ----------------
+function distPointSegment(px, py, x1, y1, x2, y2) {
+    const A = px-x1, B=py-y1, C=x2-x1, D=y2-y1;
+    const dot=A*C+B*D;
+    const len=C*C+D*D;
+    let t=Math.max(0, Math.min(1, dot/len));
+    const x=x1+t*C, y=y1+t*D;
+    return Math.hypot(px-x, py-y);
+}
+
+function segmentsIntersect(a,b,c,d){
+    function orient(p,q,r){ return (q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x); }
+    const o1=orient(a,b,c), o2=orient(a,b,d), o3=orient(c,d,a), o4=orient(c,d,b);
+    return o1*o2<0 && o3*o4<0;
+}
+
+function edgesShareNode(e1,e2){
+    return e1.source===e2.source || e1.source===e2.target || e1.target===e2.source || e1.target===e2.target;
+}
+
+function moveCrossesPolygon(oldPos,newPos){
+    if(!polygonClosed) return false;
+    for(let i=0;i<polygon.length;i++){
+        const p1=polygon[i], p2=polygon[(i+1)%polygon.length];
+        if(segmentsIntersect(oldPos,newPos,p1,p2)) return true;
+    }
+    return false;
+}
+
+function pointInPolygon(point, vs) {
+    let x = point.x, y = point.y;
+    let inside = false;
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        const xi = vs[i].x, yi = vs[i].y;
+        const xj = vs[j].x, yj = vs[j].y;
+        const intersect = ((yi > y) != (yj > y)) &&
+            (x < (xj - xi) * (y - yi) / ((yj - yi) || 0.000001) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+//---------------- Forces ----------------
+function repulsiveForce(d){ return (k*k)/d; }
+function attractiveForce(d){ return (d*d)/k; }
+
+//---------------- Subtree computation ----------------
+function computeSubtrees(){
+    movableNodes.clear(); subtreeEdges.clear();
+    if(!rootNode) return;
+    const adj={};
+    for(let i=0;i<nodes.length;i++) adj[i]=[];
+    for(let i=0;i<links.length;i++){
+        const e=links[i];
+        adj[e.source].push({node:e.target, edge:i});
+        adj[e.target].push({node:e.source, edge:i});
+    }
+    for(const edgeIndex of selectedEdges){
+        const e=links[edgeIndex];
+        let start=(e.source===rootNode)?e.target:e.source;
+        let stack=[start]; let visited=new Set([rootNode]);
+        subtreeEdges.add(edgeIndex);
+        while(stack.length){
+            let v=stack.pop();
+            if(visited.has(v)) continue;
+            visited.add(v); movableNodes.add(v);
+            for(const item of adj[v]){
+                if(!visited.has(item.node)){
+                    stack.push(item.node);
+                    subtreeEdges.add(item.edge);
+                }
+            }
+        }
+    }
+}
+
+//---------------- Simulation ----------------
+function step(){
+    for(let i=0;i<nodes.length;i++){
+        if(i===rootNode || !movableNodes.has(i)) continue;
+        const v=nodes[i]; const old={x:v.x,y:v.y};
+        let fx=0, fy=0;
+        for(let j=0;j<nodes.length;j++){
+            if(i===j) continue;
+            const u=nodes[j]; let dx=v.x-u.x, dy=v.y-u.y, d=Math.hypot(dx,dy)||0.01;
+            const f=repulsiveForce(d); fx+=(dx/d)*f; fy+=(dy/d)*f;
+        }
+        for(const e of links){
+            let u=null;
+            if(e.source===i) u=nodes[e.target]; else if(e.target===i) u=nodes[e.source]; else continue;
+            let dx=v.x-u.x, dy=v.y-u.y, d=Math.hypot(dx,dy)||0.01;
+            const f=attractiveForce(d); fx-=(dx/d)*f; fy-=(dy/d)*f;
+        }
+        const disp=Math.hypot(fx,fy)||0.01;
+        v.x+=(fx/disp)*Math.min(disp,temperature); v.y+=(fy/disp)*Math.min(disp,temperature);
+        if(moveCrossesPolygon(old,v)) v.x=old.x, v.y=old.y;
+    }
+    temperature*=cooling;
+}
+
+//---------------- Drawing ----------------
+function drawPolygon(){
+    if(polygon.length===0) return;
+    ctx.strokeStyle="#444"; ctx.fillStyle="rgba(200,200,200,0.15)";
+    ctx.beginPath(); ctx.moveTo(polygon[0].x,polygon[0].y);
+    for(let i=1;i<polygon.length;i++) ctx.lineTo(polygon[i].x,polygon[i].y);
+    if(polygonClosed){ ctx.closePath(); ctx.fill(); }
+    ctx.stroke(); ctx.fillStyle="black";
+    for(const p of polygon){ ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill(); }
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawPolygon(); ctx.lineWidth=2;
+    for(let i=0;i<links.length;i++){
+        const e=links[i]; const s=nodes[e.source], t=nodes[e.target];
+        ctx.strokeStyle = selectedEdges.has(i) ? "orange" : subtreeEdges.has(i) ? "green" : "#aaa";
+        ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y); ctx.stroke();
+    }
+    for(let i=0;i<nodes.length;i++){
+        const v=nodes[i];
+        ctx.beginPath(); ctx.fillStyle=(i===rootNode)?"red":"#4682b4";
+        ctx.arc(v.x,v.y,6,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="black"; ctx.fillText(v.id,v.x+6,v.y-6);
+    }
+}
+
+//---------------- Parsing ----------------
+function loadGraphFromText(text){
+    nodes=[]; links=[]; nodeIndex.clear();
+    const lines=text.split("\n").map(l=>l.trim()).filter(Boolean);
+    let idx=0;
+    for(const line of lines){
+        const p=line.split(/\s+/);
+        if(p.length===3){ const [id,x,y]=p; nodes.push({id, x:+x, y:+y}); nodeIndex.set(id, idx++); }
+    }
+    for(const line of lines){
+        const p=line.split(/\s+/);
+        if(p.length===2){ const [a,b]=p;
+            if(nodeIndex.has(a) && nodeIndex.has(b)) links.push({source:nodeIndex.get(a), target:nodeIndex.get(b)});
+        }
+    }
+    k=Math.sqrt((canvas.width*canvas.height)/Math.max(1,nodes.length));
+    temperature=canvas.width/10;
+    draw();
+}
+
+//---------------- Mouse interaction ----------------
+canvas.addEventListener("click", e=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+    if(selectingNode){
+        for(let i=0;i<nodes.length;i++){
+            const n=nodes[i];
+            if(Math.hypot(n.x-x,n.y-y)<10){ rootNode=i; computeSubtrees(); draw(); return; }
+        }
+    }
+    if(selectingEdges && rootNode!==null){
+        for(let i=0;i<links.length;i++){
+            const e=links[i];
+            if(e.source!==rootNode && e.target!==rootNode) continue;
+            const s=nodes[e.source], t=nodes[e.target];
+            if(distPointSegment(x,y,s.x,s.y,t.x,t.y)<8){ selectedEdges.add(i); computeSubtrees(); draw(); return; }
+        }
+    }
+    if(!polygonClosed){ polygon.push({x,y}); draw(); }
+});
+
+//---------------- UI ----------------
+document.getElementById("finishPolygon").onclick = ()=>{ if(polygon.length>=3) polygonClosed=true; draw(); };
+document.getElementById("clearPolygon").onclick = ()=>{ polygon=[]; polygonClosed=false; draw(); };
+document.getElementById("selectNodeBtn").onclick = ()=>{ selectingNode=true; selectingEdges=false; };
+document.getElementById("selectEdgesBtn").onclick = ()=>{ selectingEdges=true; selectingNode=false; };
+document.getElementById("clearSelection").onclick = ()=>{ rootNode=null; selectedEdges.clear(); subtreeEdges.clear(); movableNodes.clear(); draw(); };
+document.getElementById("loadGraph").onclick = ()=>loadGraphFromText(document.getElementById("graphInput").value);
+document.getElementById("periodInput").onchange = e=>{ period=Math.max(1,+e.target.value); if(intervalId) start(); };
+document.getElementById("coolingInput").onchange = e=>{ cooling=Math.min(1,Math.max(0,+e.target.value)); };
+
+function start(){ stop(); intervalId=setInterval(()=>{ step(); draw(); },period); }
+function stop(){ if(intervalId){ clearInterval(intervalId); intervalId=null; } }
+document.getElementById("startBtn").onclick=start;
+document.getElementById("stopBtn").onclick=stop;
+
+//---------------- Actions 1-5 ----------------
+let actionIntervals={};
+
+function getChildren(){
+    if(!rootNode) return [];
+    const children=[];
+    for(const edgeIndex of selectedEdges){
+        const e=links[edgeIndex];
+        children.push((e.source===rootNode)?e.target:e.source);
+    }
+    return children;
+}
+
+// Action1
+document.getElementById("action1Btn").onclick = () => {
+    const children = getChildren(); if(children.length===0 || polygon.length===0) return;
+    const v1 = nodes[children[0]];
+    let minDist=Infinity, closest=null;
+    for(const p of polygon){ const d=Math.hypot(v1.x-p.x,v1.y-p.y); if(d<minDist){ minDist=d; closest=p; } }
+    if(closest){ v1.x=closest.x; v1.y=closest.y; draw(); }
+};
+
+// Action2
+document.getElementById("action2Btn").onclick = () => {
+    const children = getChildren(); if(children.length===0 || polygon.length===0) return;
+    const v1 = nodes[children[0]]; const r=20; let angle=0;
+    clearInterval(actionIntervals.action2);
+    actionIntervals.action2 = setInterval(()=>{
+        angle+=1; if(angle>360){ clearInterval(actionIntervals.action2); return; }
+        v1.x=v1.x+r*Math.cos(angle*Math.PI/180); v1.y=v1.y+r*Math.sin(angle*Math.PI/180); draw();
+    },500);
+};
+
+// Action3
+document.getElementById("action3Btn").onclick = () => {
+    const children = getChildren(); if(children.length===0 || polygon.length===0) return;
+    const v1 = nodes[children[0]]; let radius=200, maxAttempts=10, attempt=0; let center={x:v1.x, y:v1.y};
+    function tryCircle(){
+        let angle=0;
+        function moveStep(){
+            if(angle>360){ attempt++; if(attempt>=maxAttempts){ alert("Unable to place the vertex inside the region"); return; } radius/=2; angle=0; setTimeout(moveStep,0); return; }
+            v1.x=center.x+radius*Math.cos(angle*Math.PI/180); v1.y=center.y+radius*Math.sin(angle*Math.PI/180); draw();
+            if(pointInPolygon(v1,polygon)) return;
+            angle+=1; setTimeout(moveStep,50);
+        }
+        moveStep();
+    }
+    tryCircle();
+};
+
+// Action4
+document.getElementById("action4Btn").onclick = () => {
+    const children = getChildren(); if(children.length===0 || polygon.length===0) return;
+    const subtree = Array.from(movableNodes);
+    let index=0;
+    function placeNext(){
+        if(index>=subtree.length) return;
+        const v = nodes[subtree[index]]; let radius=200, maxAttempts=10, attempt=0, center={x:v.x, y:v.y};
+        function tryCircle(){
+            let angle=0;
+            function moveStep(){
+                if(angle>360){ attempt++; if(attempt>=maxAttempts){ alert("Unable to place the vertex inside the region"); return; } radius/=2; angle=0; setTimeout(moveStep,0); return; }
+                v.x=center.x+radius*Math.cos(angle*Math.PI/180); v.y=center.y+radius*Math.sin(angle*Math.PI/180);
+                let crosses=false;
+                for(const e of links){
+                    const s=nodes[e.source], t=nodes[e.target];
+                    if( (pointInPolygon(s,polygon) || pointInPolygon(t,polygon)) &&
+                        segmentsIntersect({x:s.x,y:s.y},{x:t.x,y:t.y},{x:v.x,y:v.y},{x:v.x,y:v.y}) ){ crosses=true; break; }
+                }
+                draw();
+                if(pointInPolygon(v,polygon) && !crosses){ index++; setTimeout(placeNext,0); return; }
+                angle+=1; setTimeout(moveStep,50);
+            }
+            moveStep();
+        }
+        tryCircle();
+    }
+    placeNext();
+};
+
+// Action5
+document.getElementById("action5Btn").onclick = () => {
+    const children = getChildren(); if(children.length===0 || polygon.length===0) return;
+    const subtree = Array.from(movableNodes);
+    const placedNodes = new Set();
+    let index=0;
+    function placeNext(){
+        if(index>=subtree.length) return;
+        const vi = nodes[subtree[index]]; 
+        let center={x:vi.x, y:vi.y};
+        if(index!==0){
+            // find incident edge with neighbor already placed
+            for(const e of links){
+                if(e.source===subtree[index] && placedNodes.has(e.target)){ center={x:nodes[e.target].x, y:nodes[e.target].y}; break; }
+                if(e.target===subtree[index] && placedNodes.has(e.source)){ center={x:nodes[e.source].x, y:nodes[e.source].y}; break; }
+            }
+        }
+        let radius=200, maxAttempts=10, attempt=0;
+        function tryCircle(){
+            let angle=0;
+            function moveStep(){
+                if(angle>360){ attempt++; if(attempt>=maxAttempts){ alert("Unable to place the vertex inside the region"); return; } radius/=2; angle=0; setTimeout(moveStep,0); return; }
+                vi.x=center.x+radius*Math.cos(angle*Math.PI/180); vi.y=center.y+radius*Math.sin(angle*Math.PI/180);
+                let crosses=false;
+                for(const e of links){
+                    const s=nodes[e.source], t=nodes[e.target];
+                    if( (pointInPolygon(s,polygon) || pointInPolygon(t,polygon)) &&
+                        segmentsIntersect({x:s.x,y:s.y},{x:t.x,y:t.y},{x:vi.x,y:vi.y},{x:vi.x,y:vi.y}) ){ crosses=true; break; }
+                }
+                draw();
+                if(pointInPolygon(vi,polygon) && !crosses){ placedNodes.add(subtree[index]); index++; setTimeout(placeNext,0); return; }
+                angle+=1; setTimeout(moveStep,50);
+            }
+            moveStep();
+        }
+        tryCircle();
+    }
+    placeNext();
+};
+
+draw();
+</script>
+</body>
+</html>
