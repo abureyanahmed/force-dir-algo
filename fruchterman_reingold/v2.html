@@ -23,7 +23,7 @@
 <canvas id="graph" width="800" height="600"></canvas>
 
 <script>
-const nodes = [
+/*const nodes = [
   { id: 0, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
   { id: 1, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
   { id: 2, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 }
@@ -32,6 +32,25 @@ const nodes = [
 const links = [
   { source: 0, target: 1 },
   { source: 1, target: 2 }
+];*/
+
+const nodes = [
+  { id: 0, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 1, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 2, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 3, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 },
+  { id: 4, x: Math.random() * 800, y: Math.random() * 600, vx: 0, vy: 0 }
+];
+
+const links = [
+  { source: 0, target: 1 },
+  { source: 0, target: 2 },
+  { source: 0, target: 3 },
+  { source: 1, target: 2 },
+  { source: 1, target: 4 },
+  { source: 2, target: 3 },
+  { source: 2, target: 4 },
+  { source: 3, target: 4 }
 ];
 
 const width = 800;
@@ -102,9 +121,12 @@ function step() {
     const disp = Math.hypot(v.vx, v.vy) || 0.01;
     v.x += (v.vx / disp) * Math.min(disp, temperature);
     v.y += (v.vy / disp) * Math.min(disp, temperature);
+    //v.x += v.vx;
+    //v.y += v.vy;
 
     v.x = Math.min(width, Math.max(0, v.x));
     v.y = Math.min(height, Math.max(0, v.y));
+    console.log(v.id, v.x, v.y)
   }
 
   temperature *= cooling;
@@ -137,13 +159,20 @@ function drawCanvas() {
   }
 }
 
-function animate() {
+/*function animate() {
   step();
   drawCanvas();
   requestAnimationFrame(animate);
 }
 
-animate();
+animate();*/
+function animate(i) {
+  step();
+  drawCanvas();
+  if(i<50)
+    requestAnimationFrame(() => animate(i+1));
+}
+animate(0)
 </script>
 
 </body>
