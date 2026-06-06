@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <script src="../nodes.js"></script>
+  <script src="../links.js"></script>
   <title>FR Graph – Sequential Update</title>
   <style>
     body {
@@ -64,8 +66,8 @@ const area = width * height;
 const canvas = document.getElementById("graph");
 const ctx = canvas.getContext("2d");
 
-let nodes = [];
-let links = [];
+//let nodes = [];
+//let links = [];
 
 let k;
 let temperature;
@@ -85,6 +87,11 @@ function createNodes(n) {
       y: Math.random() * height
     });
   }
+  k = Math.sqrt(area / nodes.length);
+  temperature = width / 10;
+}
+
+function init_k_temp(n) {
   k = Math.sqrt(area / nodes.length);
   temperature = width / 10;
 }
@@ -231,6 +238,7 @@ document.getElementById("runBtn").addEventListener("click", () => {
   stopAnimation();
   createNodes(n);
   createLinks(type);
+  console.log(nodes, links)
   draw();
 });
 
@@ -243,8 +251,9 @@ document.getElementById("periodInput").addEventListener("change", (e) => {
 });
 
 // initial graph
-createNodes(3);
-createLinks("path3");
+//createNodes(3);
+//createLinks("path3");
+init_k_temp();
 draw();
 </script>
 
