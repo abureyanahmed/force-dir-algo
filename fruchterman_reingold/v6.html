@@ -2,8 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <script src="../nodes.js"></script>
-  <script src="../links.js"></script>
+  
+  <!--<script src="../nodes.js"></script>
+  <script src="../links.js"></script>-->
+
+  <script>
+    const fid = "4"
+
+    const nodesFile = "../nodes_"+fid+".js"; 
+    const script = document.createElement("script");
+    script.src = nodesFile;
+    document.head.appendChild(script);
+
+    const linksFile = "../links_"+fid+".js"; 
+    const script2 = document.createElement("script");
+    script2.src = linksFile;
+    document.head.appendChild(script2);
+  </script>
   <title>FR Graph – Sequential Update</title>
   <style>
     body {
@@ -75,6 +90,8 @@ const cooling = 0.95;
 
 let intervalId = null;
 let period = 16;
+
+const borderBounded = false;
 
 // ----------------- Graph creation -----------------
 
@@ -182,8 +199,10 @@ function step() {
     v.x += (fx / disp) * Math.min(disp, temperature);
     v.y += (fy / disp) * Math.min(disp, temperature);
 
-    v.x = Math.min(width, Math.max(0, v.x));
-    v.y = Math.min(height, Math.max(0, v.y));
+    if(borderBounded){
+      v.x = Math.min(width, Math.max(0, v.x));
+      v.y = Math.min(height, Math.max(0, v.y));
+    }
   }
 
   temperature *= cooling;
@@ -191,10 +210,48 @@ function step() {
 
 // ----------------- Drawing -----------------
 
+function computeTransform(nodes, width, height, padding = 20) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of Object.values(nodes)) {
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x);
+        maxY = Math.max(maxY, node.y);
+    }
+
+    const graphWidth = Math.max(maxX - minX, 1);
+    const graphHeight = Math.max(maxY - minY, 1);
+
+    const scale = Math.min(
+        (width - 2 * padding) / graphWidth,
+        (height - 2 * padding) / graphHeight
+    );
+
+    // Center the graph
+    const tx =
+        (width - graphWidth * scale) / 2 - minX * scale;
+
+    const ty =
+        (height - graphHeight * scale) / 2 - minY * scale;
+
+    return { scale, tx, ty };
+}
+
+function transformPoint(x, y, transform) {
+    return {
+        x: x * transform.scale + transform.tx,
+        y: y * transform.scale + transform.ty,
+    };
+}
+
 function draw() {
   ctx.clearRect(0, 0, width, height);
 
-  ctx.strokeStyle = "#aaa";
+  /*ctx.strokeStyle = "#aaa";
   ctx.beginPath();
   for (const e of links) {
     const s = nodes[e.source];
@@ -209,7 +266,36 @@ function draw() {
     ctx.beginPath();
     ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
     ctx.fill();
+  }*/
+
+  const tr = computeTransform(nodes, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+
+  for (const e of links) {
+      const s = nodes[e.source];
+      const t = nodes[e.target];
+
+      const ps = transformPoint(s.x, s.y, tr);
+      const pt = transformPoint(t.x, t.y, tr);
+
+      ctx.moveTo(ps.x, ps.y);
+      ctx.lineTo(pt.x, pt.y);
   }
+
+  ctx.stroke();
+
+  ctx.fillStyle = "#4682b4";
+
+  for (const v of nodes) {
+      const p = transformPoint(v.x, v.y, tr);
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+  }
+
 }
 
 // ----------------- Animation control -----------------
@@ -236,8 +322,9 @@ document.getElementById("runBtn").addEventListener("click", () => {
   const n = parseInt(type.match(/\d+/)[0]);
 
   stopAnimation();
-  createNodes(n);
-  createLinks(type);
+  //createNodes(n);
+  //createLinks(type);
+  init_k_temp();
   console.log(nodes, links)
   draw();
 });
@@ -253,8 +340,8 @@ document.getElementById("periodInput").addEventListener("change", (e) => {
 // initial graph
 //createNodes(3);
 //createLinks("path3");
-init_k_temp();
-draw();
+//init_k_temp();
+//draw();
 </script>
 
 </body>
