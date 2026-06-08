@@ -17,7 +17,7 @@ def add_node(u, nodes_to_id, id_to_nodes, cur_id):
         return cur_id + 1
     return cur_id
 
-def convert_txt_to_json(fname):
+def convert_txt_to_json(fname, fid):
     f = open(fname, "r")
     content = f.read()
     lines = content.split("\n")
@@ -47,16 +47,21 @@ def convert_txt_to_json(fname):
         u, v = edge
         links.append({"source": nodes_to_id[u], "target": nodes_to_id[v]})
     #print(links)
-    with open("nodes.js", "w") as file:
+    node_file = "nodes_{0}.js".format(fid)
+    with open(node_file, "w") as file:
         json_string = json.dumps(nodes)
         file.write("nodes = " + json_string)
-    with open("links.js", "w") as file:
+    
+    link_file = "links_{0}.js".format(fid)
+    with open(link_file, "w") as file:
         json_string = json.dumps(links)
         file.write("links = " + json_string)
     f.close()
 
 def main():
-    fname = input("Enter file name:")
-    convert_txt_to_json(fname)
+    #fname = input("Enter file name:")
+    fid = input("Enter file number:")
+    fname = "Graph_{0}.txt".format(fid)
+    convert_txt_to_json(fname, fid)
 
 main()
