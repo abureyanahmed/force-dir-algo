@@ -7,7 +7,7 @@
   <script src="../links.js"></script>-->
 
   <script>
-    const fid = "4"
+    const fid = "0"
 
     const nodesFile = "../nodes_"+fid+".js"; 
     const script = document.createElement("script");
@@ -140,12 +140,39 @@ function createLinks(type) {
 
 // ----------------- FR forces -----------------
 
+//const repulsiveStrength = 1.0;
+const repulsiveStrength = 0.1;
 function repulsiveForce(d) {
-  return (k * k) / d;
+  return repulsiveStrength * (k * k) / d;
 }
 
 function attractiveForce(d) {
   return (d * d) / k;
+}
+
+//const centerStrength = 0.01;
+const centerStrength = 0.1;
+function centerForce(distanceToCenter) {
+  return centerStrength * distanceToCenter;
+}
+
+function computeCenter(nodes) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of Object.values(nodes)) {
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x);
+        maxY = Math.max(maxY, node.y);
+    }
+
+    return {
+        cx: (minX + maxX) / 2,
+        cy: (minY + maxY) / 2,
+    };
 }
 
 // ----------------- Sequential step -----------------
@@ -193,6 +220,17 @@ function step() {
       fx -= dx * f;
       fy -= dy * f;
     }
+
+    // center force
+    let { cx, cy } = computeCenter(nodes);
+    let dx = cx - v.x;
+    let dy = cy - v.y;
+    let dist = Math.hypot(dx, dy) || 0.01;
+
+    let f = centerForce(dist);
+
+    fx += (dx / dist) * f;
+    fy += (dy / dist) * f;
 
     // Move immediately
     const disp = Math.hypot(fx, fy) || 0.01;
