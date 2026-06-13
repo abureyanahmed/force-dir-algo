@@ -306,7 +306,7 @@ function draw() {
     ctx.fill();
   }*/
 
-  const tr = computeTransform(nodes, canvas.width, canvas.height);
+  const tr = computeTransform(nodes, canvas.width, canvas.height, 40);
 
   ctx.strokeStyle = "#aaa";
   ctx.beginPath();
@@ -333,6 +333,17 @@ function draw() {
       ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
       ctx.fill();
   }
+
+  // Set your text styles
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = 'black';
+  ctx.textBaseline = 'top';
+
+  // Loop and draw (assuming your nodes have x and y coordinates)
+  nodes.forEach(node => {
+      const p = transformPoint(node.x, node.y, tr);
+      ctx.fillText(node.label, p.x, p.y);
+  });
 
 }
 
