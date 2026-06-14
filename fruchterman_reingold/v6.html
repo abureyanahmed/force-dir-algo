@@ -73,6 +73,14 @@
 
 <canvas id="graph" width="800" height="600"></canvas>
 
+<div id="bounded_region">
+  <label for="boundary_x">x:</label>
+  <input type="text" id="boundary_x">
+  <label for="boundary_y">y:</label>
+  <input type="text" id="boundary_y">
+  <input type="button" value="next" id="nextBtn">
+</div>
+
 <script>
 const width = 800;
 const height = 600;
@@ -92,6 +100,65 @@ let intervalId = null;
 let period = 16;
 
 const borderBounded = false;
+
+// ----------------- Boundary -----------------
+
+const boundaryPoints = [];
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  const x = parseFloat(document.getElementById("boundary_x").value);
+  const y = parseFloat(document.getElementById("boundary_y").value);
+
+  // Optional: basic validation
+  if (Number.isNaN(x) || Number.isNaN(y)) {
+    alert("Please enter valid numbers for x and y");
+    return;
+  }
+
+  boundaryPoints.push({ x, y });
+
+  console.log("Current points:", boundaryPoints);
+
+  // Optional: clear inputs after adding
+  document.getElementById("boundary_x").value = "";
+  document.getElementById("boundary_y").value = "";
+});
+
+function drawBoundary(ctx, points, transform) {
+  ctx.fillStyle = "#4682b4";
+
+  for (const v of points) {
+    const p = transformPoint(v.x, v.y, transform);
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (points.length < 2) return;
+  
+  ctx.strokeStyle = "#aaa";
+  ctx.beginPath();
+
+  // move to first point
+  const first = transformPoint(points[0].x, points[0].y, transform);
+  ctx.moveTo(first.x, first.y);
+
+  // connect each point to the next
+  for (let i = 1; i < points.length; i++) {
+    const p = transformPoint(points[i].x, points[i].y, transform);
+    ctx.lineTo(p.x, p.y);
+  }
+
+  // close the region (last → first)
+  ctx.lineTo(first.x, first.y);
+
+  ctx.stroke();
+
+  // optional: fill the region
+  ctx.fillStyle = "rgba(70, 130, 180, 0.15)";
+  ctx.fill();
+}
 
 // ----------------- Graph creation -----------------
 
@@ -261,6 +328,8 @@ function computeTransform(nodes, width, height, padding = 20) {
         maxY = Math.max(maxY, node.y);
     }
 
+    console.log("Boundary box: (min)", minX, minY, "(max)", maxX, maxY)
+
     const graphWidth = Math.max(maxX - minX, 1);
     const graphHeight = Math.max(maxY - minY, 1);
 
@@ -344,6 +413,8 @@ function draw() {
       const p = transformPoint(node.x, node.y, tr);
       ctx.fillText(node.label, p.x, p.y);
   });
+
+  drawBoundary(ctx, boundaryPoints, tr)
 
 }
 
