@@ -151,7 +151,7 @@ function drawBoundary(ctx, points, transform) {
     ctx.lineTo(p.x, p.y);
   }
 
-  // close the region (last → first)
+  // close the region
   ctx.lineTo(first.x, first.y);
 
   ctx.stroke();
