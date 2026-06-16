@@ -118,7 +118,7 @@ def convert_txt_to_json(fname, fid, random_layout):
         link_file = "links_{0}.js".format(fid)
         with open(link_file, "w") as file:
             json_string = json.dumps(links)
-            file.write("links = " + json_string)
+            file.write("links_org = " + json_string)
         f.close()
     else:
         file_name = ["Graph_0.txt", "Graph_1.txt", "Graph_2.txt", "Graph_3.txt", "Graph_4.txt"]
