@@ -101,6 +101,7 @@ let intervalId = null;
 let period = 16;
 
 const borderBounded = false;
+const showLabels = false;
 
 // ----------------- Boundary -----------------
 
@@ -179,6 +180,7 @@ function createNodes(n) {
 function init_k_temp(n) {
   k = Math.sqrt(area / nodes.length);
   temperature = width / 10;
+  non_isolated_nodes = []
 }
 
 function createLinks(type) {
@@ -405,15 +407,17 @@ function draw() {
   }
 
   // Set your text styles
-  ctx.font = '16px sans-serif';
-  ctx.fillStyle = 'black';
-  ctx.textBaseline = 'top';
+  if(showLabels){
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = 'black';
+    ctx.textBaseline = 'top';
 
-  // Loop and draw (assuming your nodes have x and y coordinates)
-  nodes.forEach(node => {
-      const p = transformPoint(node.x, node.y, tr);
-      ctx.fillText(node.label, p.x, p.y);
-  });
+    // Loop and draw (assuming your nodes have x and y coordinates)
+    nodes.forEach(node => {
+        const p = transformPoint(node.x, node.y, tr);
+        ctx.fillText(node.label, p.x, p.y);
+    });
+  }
 
   drawBoundary(ctx, boundaryPoints, tr)
 

@@ -16,9 +16,9 @@ function create_adj_list(nodes, links){
         if (adj_list[source]) {
             adj_list[source].push(target)
         }
-        if (adj_list[target]) {
+        /*if (adj_list[target]) {
             adj_list[target].push(source)
-        }
+        }*/
     }
     
     return adj_list
@@ -48,17 +48,25 @@ function next_edge(){
         //nodes = [{id:next_node, x: nodes_org[next_node]['x'], y: nodes_org[next_node]['y'], label: nodes_org[next_node]['label']}]
         let target = adj_list[next_node][next_ngbr]
         links = [{source:next_node, target:target}]
-        if(!find_node(target, nodes)){
+        /*if(!find_node(target, nodes)){
             nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
+        }*/
+        if(!find_node(target, non_isolated_nodes)){
+            non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
         }
     }
     else if(adj_list[next_node].length>(next_ngbr+1)){
         next_ngbr += 1
 
         let target = adj_list[next_node][next_ngbr]
-        links.push({source:next_node, target:target})
-        if(!find_node(target, nodes)){
-            nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
+        if(target!=undefined){
+            links.push({source:next_node, target:target})
+            /*if(!find_node(target, nodes)){
+                nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
+            }*/
+            if(!find_node(target, non_isolated_nodes)){
+                non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+            }
         }
     }
     else if(Object.keys(adj_list).length>(next_node+1)){
@@ -69,9 +77,15 @@ function next_edge(){
         //    nodes.push({id:next_node, x: nodes_org[next_node]['x'], y: nodes_org[next_node]['y'], label: nodes_org[next_node]['label']})
         //}
         let target = adj_list[next_node][next_ngbr]
-        links.push({source:next_node, target:target})
-        if(!find_node(target, nodes)){
-            nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
+        //console.log(adj_list, next_node, next_ngbr)
+        if(target!=undefined){
+            links.push({source:next_node, target:target})
+            /*if(!find_node(target, nodes)){
+                nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
+            }*/
+            if(!find_node(target, non_isolated_nodes)){
+                non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+            }
         }
     }
 }
