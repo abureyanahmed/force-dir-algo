@@ -101,7 +101,8 @@ let intervalId = null;
 let period = 16;
 
 const borderBounded = false;
-const showLabels = false;
+const showLabels = true;
+//const showLabels = false;
 
 // ----------------- Boundary -----------------
 
@@ -178,9 +179,8 @@ function createNodes(n) {
 }
 
 function init_k_temp(n) {
-  k = Math.sqrt(area / nodes.length);
+  k = Math.sqrt(area / Object.keys(nodes).length);
   temperature = width / 10;
-  non_isolated_nodes = []
 }
 
 function createLinks(type) {
@@ -248,17 +248,23 @@ function computeCenter(nodes) {
 // ----------------- Sequential step -----------------
 
 function step() {
-  for (let i = 0; i < nodes.length; i++) {
-    const v = nodes[i];
+  //for (let i = 0; i < nodes.length; i++) {
+  //for (let i in nodes) {
+  for (let i in non_isolated_nodes) {
+    //const v = nodes[i];
+    const v = non_isolated_nodes[i];
 
     let fx = 0;
     let fy = 0;
 
     // Repulsion
-    for (let j = 0; j < nodes.length; j++) {
+    //for (let j = 0; j < nodes.length; j++) {
+    //for (let j in nodes) {
+    for (let j in non_isolated_nodes) {
       if (i === j) continue;
 
-      const u = nodes[j];
+      //const u = nodes[j];
+      const u = non_isolated_nodes[j];
       let dx = v.x - u.x;
       let dy = v.y - u.y;
       let dist = Math.hypot(dx, dy) || 0.01;
@@ -275,8 +281,8 @@ function step() {
     for (const e of links) {
       let u = null;
 
-      if (e.source === i) u = nodes[e.target];
-      else if (e.target === i) u = nodes[e.source];
+      if (e.source == i) u = nodes[e.target];
+      else if (e.target == i) u = nodes[e.source];
       else continue;
 
       let dx = v.x - u.x;
@@ -378,7 +384,9 @@ function draw() {
     ctx.fill();
   }*/
 
-  const tr = computeTransform(nodes, canvas.width, canvas.height, 40);
+  //const tr = computeTransform(nodes, canvas.width, canvas.height, 40);
+  const tr = computeTransform(non_isolated_nodes, canvas.width, canvas.height, 40);
+  //console.log(tr)
 
   ctx.strokeStyle = "#aaa";
   ctx.beginPath();
@@ -398,7 +406,11 @@ function draw() {
 
   ctx.fillStyle = "#4682b4";
 
-  for (const v of nodes) {
+  //for (const v of nodes) {
+  //for (let i in nodes) {
+  for (let i in non_isolated_nodes) {
+      //let v = nodes[i]
+      let v = non_isolated_nodes[i]
       const p = transformPoint(v.x, v.y, tr);
 
       ctx.beginPath();
@@ -413,10 +425,15 @@ function draw() {
     ctx.textBaseline = 'top';
 
     // Loop and draw (assuming your nodes have x and y coordinates)
-    nodes.forEach(node => {
+    //nodes.forEach(node => {
+    //for(let i in nodes){
+    for(let i in non_isolated_nodes){
+        //let node = nodes[i]
+        let node = non_isolated_nodes[i]
         const p = transformPoint(node.x, node.y, tr);
         ctx.fillText(node.label, p.x, p.y);
-    });
+    //});
+    }
   }
 
   drawBoundary(ctx, boundaryPoints, tr)

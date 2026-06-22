@@ -3,8 +3,8 @@ function create_adj_list(nodes, links){
     // ...
     
     // Initialize adjacency list for each node
-    for (const node of nodes) {
-        adj_list[node.id] = []
+    for (const node in nodes) {
+        adj_list[node] = []
     }
     
     // Build adjacency list from links (undirected graph)
@@ -27,17 +27,19 @@ function create_adj_list(nodes, links){
 function init_nodes_links(){
     //nodes = []
     links = []
+    non_isolated_nodes = {}
     next_node = -1
     next_ngbr = -1
     adj_list = create_adj_list(nodes, links_org)
 }
 
 function find_node(node_id, node_list){
-    for(var i=0;i<node_list.length;i++){
+    /*for(var i=0;i<node_list.length;i++){
         if(node_list[i].id==node_id)
             return true
     }
-    return false
+    return false*/
+    return node_id in node_list
 }
 
 function next_edge(){
@@ -51,8 +53,15 @@ function next_edge(){
         /*if(!find_node(target, nodes)){
             nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
         }*/
+        if(!find_node(next_node, non_isolated_nodes)){
+            //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+            //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
+            non_isolated_nodes[next_node] = nodes[next_node]
+        }
         if(!find_node(target, non_isolated_nodes)){
-            non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+            //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+            //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
+            non_isolated_nodes[target] = nodes[target]
         }
     }
     else if(adj_list[next_node].length>(next_ngbr+1)){
@@ -64,8 +73,15 @@ function next_edge(){
             /*if(!find_node(target, nodes)){
                 nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
             }*/
+            if(!find_node(next_node, non_isolated_nodes)){
+                //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
+                non_isolated_nodes[next_node] = nodes[next_node]
+            }
             if(!find_node(target, non_isolated_nodes)){
-                non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
+                non_isolated_nodes[target] = nodes[target]
             }
         }
     }
@@ -83,8 +99,15 @@ function next_edge(){
             /*if(!find_node(target, nodes)){
                 nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
             }*/
+            if(!find_node(next_node, non_isolated_nodes)){
+                //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
+                non_isolated_nodes[next_node] = nodes[next_node]
+            }
             if(!find_node(target, non_isolated_nodes)){
-                non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
+                //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
+                non_isolated_nodes[target] = nodes[target]
             }
         }
     }
