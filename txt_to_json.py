@@ -99,12 +99,18 @@ def convert_txt_to_json(fname, fid, random_layout):
             u, v = edge
             G.add_edge(u, v)
 
-        nodes = []
+        '''nodes = []
         for u in G.nodes():
             nodes.append({"id": nodes_to_id[u], 
             "x": random.random()*width, 
             "y": random.random()*height,
-            "label": u})
+            "label": u})'''
+        nodes = {}
+        for u in G.nodes():
+            nodes[nodes_to_id[u]] = {"id": nodes_to_id[u], 
+            "x": random.random()*width, 
+            "y": random.random()*height,
+            "label": u}
         links = []
         for edge in edges:
             u, v = edge
