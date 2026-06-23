@@ -108,6 +108,8 @@ const showLabels = true;
 
 const boundaryPoints = [];
 
+// (10, 15), (50, 15), (50, 60), (10, 60)
+
 document.getElementById("nextBtn").addEventListener("click", () => {
   const x = parseFloat(document.getElementById("boundary_x").value);
   const y = parseFloat(document.getElementById("boundary_y").value);
@@ -161,6 +163,28 @@ function drawBoundary(ctx, points, transform) {
   // optional: fill the region
   ctx.fillStyle = "rgba(70, 130, 180, 0.15)";
   ctx.fill();
+}
+
+function isPointInPolygon(polygon, point) {
+  const { x, y } = point;
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x;
+    const yi = polygon[i].y;
+    const xj = polygon[j].x;
+    const yj = polygon[j].y;
+
+    const intersects =
+      ((yi > y) !== (yj > y)) &&
+      (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+
+    if (intersects) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
 }
 
 // ----------------- Graph creation -----------------
@@ -313,6 +337,12 @@ function step() {
     v.x += (fx / disp) * Math.min(disp, temperature);
     v.y += (fy / disp) * Math.min(disp, temperature);
 
+    let inside = isPointInPolygon(boundaryPoints, v)
+    if(inside)
+      console.log(v.label, 'remained inside the boundary')
+    else
+      console.log(v.label, 'went outside of the boundary')
+
     if(borderBounded){
       v.x = Math.min(width, Math.max(0, v.x));
       v.y = Math.min(height, Math.max(0, v.y));
@@ -320,6 +350,24 @@ function step() {
   }
 
   temperature *= cooling;
+}
+
+// ----------------- Bounding box ------------
+
+function getCenterBoundary(points){
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of points) {
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x);
+        maxY = Math.max(maxY, node.y);
+    }
+
+    return [(minX + maxX)/2, (minY +maxY)/2]
 }
 
 // ----------------- Drawing -----------------

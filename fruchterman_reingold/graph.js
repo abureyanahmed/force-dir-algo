@@ -31,6 +31,9 @@ function init_nodes_links(){
     next_node = -1
     next_ngbr = -1
     adj_list = create_adj_list(nodes, links_org)
+    let [x, y] = getCenterBoundary(boundaryPoints)
+    centerX = x
+    centerY = y
 }
 
 function find_node(node_id, node_list){
@@ -40,6 +43,16 @@ function find_node(node_id, node_list){
     }
     return false*/
     return node_id in node_list
+}
+
+function initPosition(node){
+    node.x = centerX
+    node.y = centerY
+}
+
+function addNode(nodeID){
+    non_isolated_nodes[nodeID] = nodes[nodeID]
+    initPosition(nodes[nodeID])
 }
 
 function next_edge(){
@@ -56,12 +69,14 @@ function next_edge(){
         if(!find_node(next_node, non_isolated_nodes)){
             //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
             //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
-            non_isolated_nodes[next_node] = nodes[next_node]
+            //non_isolated_nodes[next_node] = nodes[next_node]
+            addNode(next_node)
         }
         if(!find_node(target, non_isolated_nodes)){
             //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
             //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
-            non_isolated_nodes[target] = nodes[target]
+            //non_isolated_nodes[target] = nodes[target]
+            addNode(target)
         }
     }
     else if(adj_list[next_node].length>(next_ngbr+1)){
@@ -76,12 +91,14 @@ function next_edge(){
             if(!find_node(next_node, non_isolated_nodes)){
                 //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
                 //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
-                non_isolated_nodes[next_node] = nodes[next_node]
+                //non_isolated_nodes[next_node] = nodes[next_node]
+                addNode(next_node)
             }
             if(!find_node(target, non_isolated_nodes)){
                 //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
                 //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
-                non_isolated_nodes[target] = nodes[target]
+                //non_isolated_nodes[target] = nodes[target]
+                addNode(target)
             }
         }
     }
@@ -102,12 +119,14 @@ function next_edge(){
             if(!find_node(next_node, non_isolated_nodes)){
                 //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
                 //non_isolated_nodes[next_node] = {id:next_node, x: nodes[next_node]['x'], y: nodes[next_node]['y'], label: nodes[next_node]['label']}
-                non_isolated_nodes[next_node] = nodes[next_node]
+                //non_isolated_nodes[next_node] = nodes[next_node]
+                addNode(next_node)
             }
             if(!find_node(target, non_isolated_nodes)){
                 //non_isolated_nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']})
                 //non_isolated_nodes[target] = {id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes[target]['label']}
-                non_isolated_nodes[target] = nodes[target]
+                //non_isolated_nodes[target] = nodes[target]
+                addNode(target)
             }
         }
     }
