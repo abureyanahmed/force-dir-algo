@@ -332,6 +332,15 @@ function step() {
     fx += (dx / dist) * f;
     fy += (dy / dist) * f;
 
+    // find new point, update if not going outside
+    //const disp = Math.hypot(fx, fy) || 0.01;
+    //let x_new = v.x + (fx / disp) * Math.min(disp, temperature);
+    //let y_new = v.y + (fy / disp) * Math.min(disp, temperature);
+    //if(isPointInPolygon(boundaryPoints, {x:x_new, y:y_new})){
+    //  v.x = x_new
+    //  v.y = y_new
+    //}
+
     // Move immediately
     const disp = Math.hypot(fx, fy) || 0.01;
     v.x += (fx / disp) * Math.min(disp, temperature);
