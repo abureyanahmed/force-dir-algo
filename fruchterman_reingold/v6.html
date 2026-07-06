@@ -235,13 +235,15 @@ function createLinks(type) {
 // ----------------- FR forces -----------------
 
 //const repulsiveStrength = 1.0;
-const repulsiveStrength = 0.1;
+repulsiveStrength = 0.1;
 function repulsiveForce(d) {
+  //console.log("repulsiveForce", k, d)
   return repulsiveStrength * (k * k) / d;
 }
 
+attractiveStrength = 10;
 function attractiveForce(d) {
-  return (d * d) / k;
+  return attractiveStrength * (d * d) / k;
 }
 
 //const centerStrength = 0.01;
@@ -271,6 +273,134 @@ function computeCenter(nodes) {
 
 // ----------------- Sequential step -----------------
 
+function getLineSegments(points) {
+  if (points.length < 2) return [];
+
+  return points.map((point, i) => ({
+    start: point,
+    end: points[(i + 1) % points.length],
+  }));
+}
+
+function lineSegmentsIntersect(a1, a2, b1, b2) {
+  const cross = (p, q, r) =>
+    (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+
+  const onSegment = (p, q, r) =>
+    Math.min(p.x, r.x) <= q.x &&
+    q.x <= Math.max(p.x, r.x) &&
+    Math.min(p.y, r.y) <= q.y &&
+    q.y <= Math.max(p.y, r.y);
+
+  const d1 = cross(a1, a2, b1);
+  const d2 = cross(a1, a2, b2);
+  const d3 = cross(b1, b2, a1);
+  const d4 = cross(b1, b2, a2);
+
+  // Proper intersection
+  if (
+    ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+    ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+  ) {
+    return true;
+  }
+
+  // Collinear cases
+  if (d1 === 0 && onSegment(a1, b1, a2)) return true;
+  if (d2 === 0 && onSegment(a1, b2, a2)) return true;
+  if (d3 === 0 && onSegment(b1, a1, b2)) return true;
+  if (d4 === 0 && onSegment(b1, a2, b2)) return true;
+
+  return false;
+}
+
+function findIntersectingSegment(segments, line) {
+  return segments.find(segment =>
+    lineSegmentsIntersect(
+      segment.start,
+      segment.end,
+      line.start,
+      line.end
+    )
+  );
+}
+
+function findIntersectingPoint(segment1,segment2){
+  let p1 = segment1.start
+  let p2 = segment1.end
+  let p3 = segment2.start
+  let p4 = segment2.end
+
+  let denominator = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
+  if(denominator==0)
+    return null
+
+  let ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x))/denominator
+  let ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x))/denominator
+
+  if(ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1){
+    let x = p1.x + ua * (p2.x - p1.x)
+    let y = p1.y + ua * (p2.y - p1.y)
+    return {x, y}
+  }
+
+  return null
+  
+}
+
+function getPointAlongLine(start, end, percent = 0.95){
+  let x = start.x + percent * (end.x - start.x)
+  let y = start.y + percent * (end.y - start.y)
+  //console.log("start end percent", start, end, percent, start.x + percent*(end.x - start.x), start.y, percent*(end.y - start.y))
+
+  return {x, y}
+  
+}
+
+function move_point_safe(fx, fy, v, temperature, boundaryPoints){
+  // find new point, update if not going outside
+  const disp = Math.hypot(fx, fy) || 0.01;
+  console.log("fx, fy, disp", fx, fy, disp)
+  let x_new = v.x + (fx / disp) * Math.min(disp, temperature);
+  let y_new = v.y + (fy / disp) * Math.min(disp, temperature);
+  console.log("new", x_new, y_new)
+
+  let v_new = {x:x_new, y:y_new}
+
+  let inside_org = isPointInPolygon(boundaryPoints, v)
+  if(inside_org)
+    console.log(v.label, 'was inside the boundary')
+  else
+    console.log(v.label, 'was outside of the boundary')
+
+  let inside = isPointInPolygon(boundaryPoints, v_new)
+  if(inside)
+    console.log(v.label, 'remained inside the boundary')
+  else
+    console.log(v.label, 'went outside of the boundary')
+
+  if(inside){
+    //console.log("updating", v)
+    v.x = x_new
+    v.y = y_new
+  }
+  else{
+    let line_segments = getLineSegments(boundaryPoints)
+    let movement_segment = {start:v, end:v_new}
+    console.log("line_segments", line_segments)
+    console.log("movement_segment", movement_segment)
+    let intersecting_segment = findIntersectingSegment(line_segments, movement_segment)
+    console.log(intersecting_segment)
+    let intersectingPoint = findIntersectingPoint(intersecting_segment, movement_segment)
+    if(intersecting_segment!=null)
+      console.log(intersectingPoint)
+    v_new = getPointAlongLine(v, intersectingPoint)
+    console.log("v_new", v_new)
+    v.x = v_new.x
+    v.y = v_new.y
+  }
+}
+
 function step() {
   //for (let i = 0; i < nodes.length; i++) {
   //for (let i in nodes) {
@@ -297,8 +427,15 @@ function step() {
       dx /= dist;
       dy /= dist;
 
-      fx += dx * f;
-      fy += dy * f;
+      let cur_fx = dx * f
+      let cur_fy = dy * f
+
+      //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
+
+      console.log("repulsion", dist, f, dx, dy, cur_fx, cur_fy)
+
+      fx += cur_fx;
+      fy += cur_fy;
     }
 
     // Attraction
@@ -317,40 +454,56 @@ function step() {
       dx /= dist;
       dy /= dist;
 
-      fx -= dx * f;
-      fy -= dy * f;
+      let cur_fx = dx * f
+      let cur_fy = dy * f
+
+      //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
+      console.log("attraction", dist, cur_fx, cur_fy)
+
+      fx -= cur_fx;
+      fy -= cur_fy;
     }
 
     // center force
-    let { cx, cy } = computeCenter(nodes);
+    //let { cx, cy } = computeCenter(nodes);
+    let { cx, cy } = computeCenter(non_isolated_nodes);
     let dx = cx - v.x;
     let dy = cy - v.y;
     let dist = Math.hypot(dx, dy) || 0.01;
 
     let f = centerForce(dist);
 
-    fx += (dx / dist) * f;
-    fy += (dy / dist) * f;
+    let cur_fx = (dx / dist) * f
+    let cur_fy = (dy / dist) * f
+
+    //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
+
+    console.log("f, c, cur, dist", f, cx, cy, cur_fx, cur_fy, dist)
+
+    fx += cur_fx;
+    fy += cur_fy;
 
     // find new point, update if not going outside
-    //const disp = Math.hypot(fx, fy) || 0.01;
-    //let x_new = v.x + (fx / disp) * Math.min(disp, temperature);
-    //let y_new = v.y + (fy / disp) * Math.min(disp, temperature);
-    //if(isPointInPolygon(boundaryPoints, {x:x_new, y:y_new})){
-    //  v.x = x_new
-    //  v.y = y_new
-    //}
+    /*const disp = Math.hypot(fx, fy) || 0.01;
+    let x_new = v.x + (fx / disp) * Math.min(disp, temperature);
+    let y_new = v.y + (fy / disp) * Math.min(disp, temperature);
+    if(isPointInPolygon(boundaryPoints, {x:x_new, y:y_new})){
+      v.x = x_new
+      v.y = y_new
+    }*/
+
+    move_point_safe(fx, fy, v, temperature, boundaryPoints)
 
     // Move immediately
-    const disp = Math.hypot(fx, fy) || 0.01;
-    v.x += (fx / disp) * Math.min(disp, temperature);
-    v.y += (fy / disp) * Math.min(disp, temperature);
+    //const disp = Math.hypot(fx, fy) || 0.01;
+    //v.x += (fx / disp) * Math.min(disp, temperature);
+    //v.y += (fy / disp) * Math.min(disp, temperature);
 
-    let inside = isPointInPolygon(boundaryPoints, v)
+    /*let inside = isPointInPolygon(boundaryPoints, v)
     if(inside)
       console.log(v.label, 'remained inside the boundary')
     else
-      console.log(v.label, 'went outside of the boundary')
+      console.log(v.label, 'went outside of the boundary')*/
 
     if(borderBounded){
       v.x = Math.min(width, Math.max(0, v.x));

@@ -46,8 +46,8 @@ function find_node(node_id, node_list){
 }
 
 function initPosition(node){
-    node.x = centerX
-    node.y = centerY
+    node.x = centerX + Math.random()*.1
+    node.y = centerY + Math.random()*.1
 }
 
 function addNode(nodeID){
