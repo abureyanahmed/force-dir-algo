@@ -109,6 +109,7 @@ const showLabels = true;
 const boundaryPoints = [];
 
 // (10, 15), (50, 15), (50, 60), (10, 60)
+// (100, 10), (10, 100), (190, 100)
 
 document.getElementById("nextBtn").addEventListener("click", () => {
   const x = parseFloat(document.getElementById("boundary_x").value);
@@ -282,7 +283,7 @@ function getLineSegments(points) {
   }));
 }
 
-function lineSegmentsIntersect(a1, a2, b1, b2) {
+/*function lineSegmentsIntersect(a1, a2, b1, b2) {
   const cross = (p, q, r) =>
     (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
 
@@ -312,6 +313,43 @@ function lineSegmentsIntersect(a1, a2, b1, b2) {
   if (d4 === 0 && onSegment(b1, a2, b2)) return true;
 
   return false;
+}*/
+
+const EPS = 1e-9;
+
+function cross(a, b, c) {
+  return (b.x - a.x) * (c.y - a.y) -
+         (b.y - a.y) * (c.x - a.x);
+}
+
+function sign(v) {
+  if (Math.abs(v) < EPS) return 0;
+  return v > 0 ? 1 : -1;
+}
+
+function onSegment(a, p, b) {
+  return (
+    p.x >= Math.min(a.x, b.x) - EPS &&
+    p.x <= Math.max(a.x, b.x) + EPS &&
+    p.y >= Math.min(a.y, b.y) - EPS &&
+    p.y <= Math.max(a.y, b.y) + EPS
+  );
+}
+
+function lineSegmentsIntersect(a1, a2, b1, b2) {
+  const d1 = sign(cross(a1, a2, b1));
+  const d2 = sign(cross(a1, a2, b2));
+  const d3 = sign(cross(b1, b2, a1));
+  const d4 = sign(cross(b1, b2, a2));
+
+  if (d1 * d2 < 0 && d3 * d4 < 0) return true;
+
+  if (d1 === 0 && onSegment(a1, b1, a2)) return true;
+  if (d2 === 0 && onSegment(a1, b2, a2)) return true;
+  if (d3 === 0 && onSegment(b1, a1, b2)) return true;
+  if (d4 === 0 && onSegment(b1, a2, b2)) return true;
+
+  return false;
 }
 
 function findIntersectingSegment(segments, line) {
@@ -325,7 +363,7 @@ function findIntersectingSegment(segments, line) {
   );
 }
 
-function findIntersectingPoint(segment1,segment2){
+/*function findIntersectingPoint(segment1,segment2){
   let p1 = segment1.start
   let p2 = segment1.end
   let p3 = segment2.start
@@ -346,6 +384,54 @@ function findIntersectingPoint(segment1,segment2){
 
   return null
   
+}*/
+
+function findIntersectingPoint(s1, s2) {
+  const EPS = 1e-9;
+
+  const p = s1.start;
+  const r = {
+    x: s1.end.x - s1.start.x,
+    y: s1.end.y - s1.start.y,
+  };
+
+  const q = s2.start;
+  const s = {
+    x: s2.end.x - s2.start.x,
+    y: s2.end.y - s2.start.y,
+  };
+
+  const cross = (a, b) => a.x * b.y - a.y * b.x;
+
+  const rxs = cross(r, s);
+  const qmp = {
+    x: q.x - p.x,
+    y: q.y - p.y,
+  };
+
+  if (Math.abs(rxs) < EPS) {
+    return null; // parallel or collinear
+  }
+
+  const t = cross(qmp, s) / rxs;
+  const u = cross(qmp, r) / rxs;
+
+  if (
+    t < -EPS || t > 1 + EPS ||
+    u < -EPS || u > 1 + EPS
+  ) {
+    return null;
+  }
+
+  const tc =
+    Math.abs(t) < EPS ? 0 :
+    Math.abs(t - 1) < EPS ? 1 :
+    t;
+
+  return {
+    x: p.x + tc * r.x,
+    y: p.y + tc * r.y,
+  };
 }
 
 function getPointAlongLine(start, end, percent = 0.95){
