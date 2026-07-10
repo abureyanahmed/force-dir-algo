@@ -283,6 +283,15 @@ function getLineSegments(points) {
   }));
 }
 
+function getEdgeSegments(nodes, links){
+  if (links.length < 1) return [];
+
+  return links.map((link) => ({
+    start: {x:nodes[link.source].x, y:nodes[link.source].y},
+    end: {x:nodes[link.target].x, y:nodes[link.target].y},
+  }));
+}
+
 /*function lineSegmentsIntersect(a1, a2, b1, b2) {
   const cross = (p, q, r) =>
     (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
@@ -361,6 +370,37 @@ function findIntersectingSegment(segments, line) {
       line.end
     )
   );
+}
+
+function shareEndPoints(l1, l2){
+  if((l1.start.x==l2.start.x)&&(l1.start.y==l2.start.y))
+    return true
+  if((l1.start.x==l2.end.x)&&(l1.start.y==l2.end.y))
+    return true
+  if((l1.end.x==l2.start.x)&&(l1.end.y==l2.start.y))
+    return true
+  if((l1.end.x==l2.end.x)&&(l1.end.y==l2.end.y))
+    return true
+  return false
+}
+
+function edgesIntersect(segments){
+  for(let i=0;i<segments.length;i++){
+    for(let j=i+1;j<segments.length;j++){
+      let l1 = segments[i]
+      let l2 = segments[j]
+      if (!shareEndPoints(l1, l2)){
+        let intersects = lineSegmentsIntersect(
+          l1.start,
+          l1.end,
+          l2.start,
+          l2.end
+        )
+        if(intersects)return true
+      }
+    }
+  }
+  return false
 }
 
 /*function findIntersectingPoint(segment1,segment2){
@@ -485,6 +525,13 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
     v.x = v_new.x
     v.y = v_new.y
   }
+
+  // find new point, update if no crossing
+  let edgeSegments = getEdgeSegments(non_isolated_nodes, links)
+  if(edgesIntersect(edgeSegments))
+    console.log("Edges intersect")
+  else
+    console.log("No edges intersect")
 }
 
 function step() {
