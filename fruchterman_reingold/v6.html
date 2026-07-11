@@ -483,6 +483,22 @@ function getPointAlongLine(start, end, percent = 0.95){
   
 }
 
+function crossings_from_nodes(non_isolated_nodes, links){
+  // find new point, update if no crossing
+  let edgeSegments = getEdgeSegments(non_isolated_nodes, links)
+  return edgesIntersect(edgeSegments)
+}
+
+function update_vertex_pos(v, v_new){
+  v.x = v_new.x
+  v.y = v_new.y
+
+  if(crossings_from_nodes(non_isolated_nodes, links))
+    console.log("Edges intersect")
+  else
+    console.log("No edges intersect")
+}
+
 function move_point_safe(fx, fy, v, temperature, boundaryPoints){
   // find new point, update if not going outside
   const disp = Math.hypot(fx, fy) || 0.01;
@@ -507,8 +523,9 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
 
   if(inside){
     //console.log("updating", v)
-    v.x = x_new
-    v.y = y_new
+    //v.x = x_new
+    //v.y = y_new
+    update_vertex_pos(v, v_new)
   }
   else{
     let line_segments = getLineSegments(boundaryPoints)
@@ -522,16 +539,10 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
       console.log(intersectingPoint)
     v_new = getPointAlongLine(v, intersectingPoint)
     console.log("v_new", v_new)
-    v.x = v_new.x
-    v.y = v_new.y
+    //v.x = v_new.x
+    //v.y = v_new.y
+    update_vertex_pos(v, v_new)
   }
-
-  // find new point, update if no crossing
-  let edgeSegments = getEdgeSegments(non_isolated_nodes, links)
-  if(edgesIntersect(edgeSegments))
-    console.log("Edges intersect")
-  else
-    console.log("No edges intersect")
 }
 
 function step() {
