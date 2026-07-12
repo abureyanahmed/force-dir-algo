@@ -109,6 +109,7 @@ const showLabels = true;
 const boundaryPoints = [];
 
 // (10, 15), (50, 15), (50, 60), (10, 60)
+// boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
 // (100, 10), (10, 100), (190, 100)
 
 document.getElementById("nextBtn").addEventListener("click", () => {
@@ -502,10 +503,10 @@ function update_vertex_pos(v, v_new){
 function move_point_safe(fx, fy, v, temperature, boundaryPoints){
   // find new point, update if not going outside
   const disp = Math.hypot(fx, fy) || 0.01;
-  console.log("fx, fy, disp", fx, fy, disp)
+  //console.log("fx, fy, disp", fx, fy, disp)
   let x_new = v.x + (fx / disp) * Math.min(disp, temperature);
   let y_new = v.y + (fy / disp) * Math.min(disp, temperature);
-  console.log("new", x_new, y_new)
+  //console.log("new", x_new, y_new)
 
   let v_new = {x:x_new, y:y_new}
 
@@ -530,15 +531,15 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
   else{
     let line_segments = getLineSegments(boundaryPoints)
     let movement_segment = {start:v, end:v_new}
-    console.log("line_segments", line_segments)
-    console.log("movement_segment", movement_segment)
+    //console.log("line_segments", line_segments)
+    //console.log("movement_segment", movement_segment)
     let intersecting_segment = findIntersectingSegment(line_segments, movement_segment)
-    console.log(intersecting_segment)
+    //console.log(intersecting_segment)
     let intersectingPoint = findIntersectingPoint(intersecting_segment, movement_segment)
-    if(intersecting_segment!=null)
-      console.log(intersectingPoint)
+    //if(intersecting_segment!=null)
+    //  console.log(intersectingPoint)
     v_new = getPointAlongLine(v, intersectingPoint)
-    console.log("v_new", v_new)
+    //console.log("v_new", v_new)
     //v.x = v_new.x
     //v.y = v_new.y
     update_vertex_pos(v, v_new)
@@ -576,7 +577,7 @@ function step() {
 
       //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
 
-      console.log("repulsion", dist, f, dx, dy, cur_fx, cur_fy)
+      //console.log("repulsion", dist, f, dx, dy, cur_fx, cur_fy)
 
       fx += cur_fx;
       fy += cur_fy;
@@ -602,7 +603,7 @@ function step() {
       let cur_fy = dy * f
 
       //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
-      console.log("attraction", dist, cur_fx, cur_fy)
+      //console.log("attraction", dist, cur_fx, cur_fy)
 
       fx -= cur_fx;
       fy -= cur_fy;
@@ -622,7 +623,7 @@ function step() {
 
     //move_point_safe(cur_fx, cur_fy, v, temperature, boundaryPoints)
 
-    console.log("f, c, cur, dist", f, cx, cy, cur_fx, cur_fy, dist)
+    //console.log("f, c, cur, dist", f, cx, cy, cur_fx, cur_fy, dist)
 
     fx += cur_fx;
     fy += cur_fy;

@@ -55,6 +55,15 @@ function addNode(nodeID){
     initPosition(nodes[nodeID])
 }
 
+function update_new_link(nodes, links, new_link){
+    console.log("Link added:", new_link)
+
+    if(crossings_from_nodes(non_isolated_nodes, links))
+        console.log("New link introduced crossings")
+    else
+        console.log("New link has no crossing")
+}
+
 function next_edge(){
     if(next_ngbr==-1){
         next_node = 0
@@ -62,7 +71,8 @@ function next_edge(){
 
         //nodes = [{id:next_node, x: nodes_org[next_node]['x'], y: nodes_org[next_node]['y'], label: nodes_org[next_node]['label']}]
         let target = adj_list[next_node][next_ngbr]
-        links = [{source:next_node, target:target}]
+        let new_link = {source:next_node, target:target}
+        links = [new_link]
         /*if(!find_node(target, nodes)){
             nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
         }*/
@@ -78,13 +88,15 @@ function next_edge(){
             //non_isolated_nodes[target] = nodes[target]
             addNode(target)
         }
+        update_new_link(non_isolated_nodes, links, new_link)
     }
     else if(adj_list[next_node].length>(next_ngbr+1)){
         next_ngbr += 1
 
         let target = adj_list[next_node][next_ngbr]
         if(target!=undefined){
-            links.push({source:next_node, target:target})
+            let new_link = {source:next_node, target:target}
+            links.push(new_link)
             /*if(!find_node(target, nodes)){
                 nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
             }*/
@@ -100,6 +112,7 @@ function next_edge(){
                 //non_isolated_nodes[target] = nodes[target]
                 addNode(target)
             }
+            update_new_link(non_isolated_nodes, links, new_link)
         }
     }
     else if(Object.keys(adj_list).length>(next_node+1)){
@@ -112,7 +125,8 @@ function next_edge(){
         let target = adj_list[next_node][next_ngbr]
         //console.log(adj_list, next_node, next_ngbr)
         if(target!=undefined){
-            links.push({source:next_node, target:target})
+            let new_link = {source:next_node, target:target}
+            links.push(new_link)
             /*if(!find_node(target, nodes)){
                 nodes.push({id:target, x: nodes[target]['x'], y: nodes[target]['y'], label: nodes_org[target]['label']})
             }*/
@@ -128,6 +142,7 @@ function next_edge(){
                 //non_isolated_nodes[target] = nodes[target]
                 addNode(target)
             }
+            update_new_link(non_isolated_nodes, links, new_link)
         }
     }
 }
