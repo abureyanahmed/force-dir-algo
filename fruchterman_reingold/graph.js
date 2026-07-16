@@ -52,14 +52,32 @@ function initPosition(node){
 
 function addNode(nodeID){
     non_isolated_nodes[nodeID] = nodes[nodeID]
+    non_isolated_nodes[nodeID]['insert_time'] = Object.keys(non_isolated_nodes).length
     initPosition(nodes[nodeID])
 }
 
 function update_new_link(nodes, links, new_link){
     console.log("Link added:", new_link)
 
-    if(crossings_from_nodes(non_isolated_nodes, links))
-        console.log("New link introduced crossings")
+    if(crossings_from_nodes(non_isolated_nodes, links)){
+        let attempt = 10
+        while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
+            console.log("Crossing! Updating position.")
+            let source = new_link.source
+            let target = new_link.target
+            if(nodes[source].insert_time>nodes[target].insert_time){
+                let t = source
+                source = target
+                target = t
+            }
+            let start = nodes[source]
+            let end = nodes[target]
+            let new_pos = getPointAlongLine(start, end, percent = 0.95)
+            nodes[target].x = new_pos.x
+            nodes[target].y = new_pos.y
+            attempt -= 1
+        }
+    }
     else
         console.log("New link has no crossing")
 }
