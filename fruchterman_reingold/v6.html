@@ -491,11 +491,25 @@ function crossings_from_nodes(non_isolated_nodes, links){
 }
 
 function update_vertex_pos(v, v_new){
+  let v_old = {x:v.x, y:v.y}
   v.x = v_new.x
   v.y = v_new.y
 
-  if(crossings_from_nodes(non_isolated_nodes, links))
-    console.log("Edges intersect")
+  if(crossings_from_nodes(non_isolated_nodes, links)){
+    console.log(v, "introduces crossing, updating.")
+    console.log("Old position", v_old)
+    let attempt = 10
+    //while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
+    while(crossings_from_nodes(non_isolated_nodes, links)){
+      //let new_pos = getPointAlongLine(v_old, v, percent = 0.95)
+      let new_pos = getPointAlongLine(v_old, v, percent = 0.55)
+      v.x = new_pos.x
+      v.y = new_pos.y
+      attempt -= 1
+    }
+    if(crossings_from_nodes(non_isolated_nodes, links))
+      console.log("Crossings exist, try more!")
+  }
   else
     console.log("No edges intersect")
 }

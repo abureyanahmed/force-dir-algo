@@ -61,7 +61,8 @@ function update_new_link(nodes, links, new_link){
 
     if(crossings_from_nodes(non_isolated_nodes, links)){
         let attempt = 10
-        while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
+        //while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
+        while(crossings_from_nodes(non_isolated_nodes, links)){
             console.log("Crossing! Updating position.")
             let source = new_link.source
             let target = new_link.target
