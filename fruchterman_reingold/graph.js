@@ -60,7 +60,8 @@ function update_new_link(nodes, links, new_link){
     console.log("Link added:", new_link)
 
     if(crossings_from_nodes(non_isolated_nodes, links)){
-        let attempt = 10
+        //let attempt = 10
+        let attempts = 0
         //while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
         while(crossings_from_nodes(non_isolated_nodes, links)){
             console.log("Crossing! Updating position.")
@@ -76,7 +77,18 @@ function update_new_link(nodes, links, new_link){
             let new_pos = getPointAlongLine(start, end, percent = 0.95)
             nodes[target].x = new_pos.x
             nodes[target].y = new_pos.y
-            attempt -= 1
+            //attempt -= 1
+
+            attempts++
+            
+            // 3. Every 1000 attempts, prompt the user to continue or break
+            if (attempts % 1000 === 0) {
+                let proceed = confirm(`Tried ${attempts} times to resolve link crossings. Keep trying?`);
+                if (!proceed) {
+                    console.log("User stopped the link update loop after", attempts, "attempts.");
+                    break; // Exits the while loop immediately
+                }
+            }
         }
     }
     else

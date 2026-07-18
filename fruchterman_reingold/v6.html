@@ -498,14 +498,23 @@ function update_vertex_pos(v, v_new){
   if(crossings_from_nodes(non_isolated_nodes, links)){
     console.log(v, "introduces crossing, updating.")
     console.log("Old position", v_old)
-    let attempt = 10
+    //let attempt = 10
+    let attempts = 0
     //while(crossings_from_nodes(non_isolated_nodes, links) && attempt>0){
     while(crossings_from_nodes(non_isolated_nodes, links)){
       //let new_pos = getPointAlongLine(v_old, v, percent = 0.95)
       let new_pos = getPointAlongLine(v_old, v, percent = 0.55)
       v.x = new_pos.x
       v.y = new_pos.y
-      attempt -= 1
+      //attempt -= 1
+      attempts++
+      if (attempts % 1000 === 0) {
+        let proceed = confirm(`Tried ${attempts} times. Crossings still exist. Do you want to keep trying?`);
+        if (!proceed) {
+          console.log("User stopped the loop after", attempts, "attempts.");
+          break; // Exits the while loop immediately
+        }
+      }
     }
     if(crossings_from_nodes(non_isolated_nodes, links))
       console.log("Crossings exist, try more!")
