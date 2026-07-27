@@ -288,7 +288,7 @@ def convert_txt_to_json(fname, fid, random_layout):
         for u in G.nodes():
             #nodes.append({"id": nodes_to_id[u], "x": random.random()*width, "y": random.random()*height})
             nodes[label_to_index[u]] = \
-                {"id": label_to_index[u], "x": crd_x[label_to_index[u]], "y": crd_y[label_to_index[u]]}
+                {"id": label_to_index[u], "x": crd_x[label_to_index[u]], "y": crd_y[label_to_index[u]], "label": u}
         links = []
         #for edge in edges:
         for edge in G.edges():
@@ -304,15 +304,16 @@ def convert_txt_to_json(fname, fid, random_layout):
         link_file = "links_{0}.js".format(fid)
         with open(link_file, "w") as file:
             json_string = json.dumps(links)
-            file.write("links = " + json_string)
+            #file.write("links = " + json_string)
+            file.write("links_org = " + json_string)
         
 
 def main():
     #fname = input("Enter file name:")
     fid = input("Enter file number:")
     fname = "Graph_{0}.txt".format(fid)
-    #random_layout = False
-    random_layout = True
+    random_layout = False
+    #random_layout = True
     convert_txt_to_json(fname, fid, random_layout)
 
 main()
