@@ -127,6 +127,41 @@ function init_nodes_links(){
     centerY = y
 }
 
+function init_given_layout(){
+    non_isolated_nodes = {}
+    for(nodeID in nodes){
+        non_isolated_nodes[nodeID] = nodes[nodeID]
+    }
+    links = []
+    for(new_link of links_org){
+        links.push(new_link)
+    }
+}
+
+/*function init_given_layout() {
+    const non_isolated_nodes = {};
+
+    for (const nodeID in nodes) {
+        non_isolated_nodes[nodeID] = nodes[nodeID];
+    }
+
+    const links = [];
+
+    for (const new_link of links_org) {
+        links.push(new_link);
+    }
+
+    return {
+        non_isolated_nodes,
+        links
+    };
+}*/
+
+/*const {
+    non_isolated_nodes: nodes_main,
+    links: links_main
+} = init_given_layout();*/
+
 function get_bfs_links(){
     bfs_links = bfs_edges(adj_list)
     next_edge_ind = 0

@@ -743,24 +743,8 @@ function transformPoint(x, y, transform) {
 }
 
 function draw() {
+//function draw(non_isolated_nodes, links) {
   ctx.clearRect(0, 0, width, height);
-
-  /*ctx.strokeStyle = "#aaa";
-  ctx.beginPath();
-  for (const e of links) {
-    const s = nodes[e.source];
-    const t = nodes[e.target];
-    ctx.moveTo(s.x, s.y);
-    ctx.lineTo(t.x, t.y);
-  }
-  ctx.stroke();
-
-  ctx.fillStyle = "#4682b4";
-  for (const v of nodes) {
-    ctx.beginPath();
-    ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }*/
 
   //const tr = computeTransform(nodes, canvas.width, canvas.height, 40);
   const tr = computeTransform(non_isolated_nodes, canvas.width, canvas.height, 40);
