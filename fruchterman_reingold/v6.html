@@ -110,6 +110,7 @@ const boundaryPoints = [];
 
 // (10, 15), (50, 15), (50, 60), (10, 60)
 // boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
+// boundaryPoints.push({ x:1360, y:-1000 }, { x:1360, y:1940 }, { x:-300, y:1940 }, { x:-300, y:-1000 });
 // (100, 10), (10, 100), (190, 100)
 
 document.getElementById("nextBtn").addEventListener("click", () => {
@@ -490,7 +491,8 @@ function crossings_from_nodes(non_isolated_nodes, links){
   return edgesIntersect(edgeSegments)
 }
 
-function update_vertex_pos(v, v_new){
+//function update_vertex_pos(v, v_new){
+function update_vertex_pos(v, v_new, non_isolated_nodes, links){
   let v_old = {x:v.x, y:v.y}
   v.x = v_new.x
   v.y = v_new.y
@@ -523,7 +525,8 @@ function update_vertex_pos(v, v_new){
     console.log("No edges intersect")
 }
 
-function move_point_safe(fx, fy, v, temperature, boundaryPoints){
+//function move_point_safe(fx, fy, v, temperature, boundaryPoints){
+function move_point_safe(fx, fy, v, temperature, boundaryPoints, non_isolated_nodes, links){
   // find new point, update if not going outside
   const disp = Math.hypot(fx, fy) || 0.01;
   //console.log("fx, fy, disp", fx, fy, disp)
@@ -549,7 +552,8 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
     //console.log("updating", v)
     //v.x = x_new
     //v.y = y_new
-    update_vertex_pos(v, v_new)
+    //update_vertex_pos(v, v_new)
+    update_vertex_pos(v, v_new, non_isolated_nodes, links)
   }
   else{
     let line_segments = getLineSegments(boundaryPoints)
@@ -565,11 +569,13 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints){
     //console.log("v_new", v_new)
     //v.x = v_new.x
     //v.y = v_new.y
-    update_vertex_pos(v, v_new)
+    //update_vertex_pos(v, v_new)
+    update_vertex_pos(v, v_new, non_isolated_nodes, links)
   }
 }
 
-function step() {
+//function step() {
+function step(non_isolated_nodes, links) {
   //for (let i = 0; i < nodes.length; i++) {
   //for (let i in nodes) {
   for (let i in non_isolated_nodes) {
@@ -660,7 +666,8 @@ function step() {
       v.y = y_new
     }*/
 
-    move_point_safe(fx, fy, v, temperature, boundaryPoints)
+    //move_point_safe(fx, fy, v, temperature, boundaryPoints)
+    move_point_safe(fx, fy, v, temperature, boundaryPoints, non_isolated_nodes, links)
 
     // Move immediately
     //const disp = Math.hypot(fx, fy) || 0.01;
@@ -742,13 +749,13 @@ function transformPoint(x, y, transform) {
     };
 }
 
-function draw() {
-//function draw(non_isolated_nodes, links) {
+//function draw() {
+function draw(non_isolated_nodes, links) {
   ctx.clearRect(0, 0, width, height);
 
   //const tr = computeTransform(nodes, canvas.width, canvas.height, 40);
   const tr = computeTransform(non_isolated_nodes, canvas.width, canvas.height, 40);
-  //console.log(tr)
+  console.log(tr)
 
   ctx.strokeStyle = "#aaa";
   ctx.beginPath();

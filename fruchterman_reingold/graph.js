@@ -127,7 +127,7 @@ function init_nodes_links(){
     centerY = y
 }
 
-function init_given_layout(){
+/*function init_given_layout(){
     non_isolated_nodes = {}
     for(nodeID in nodes){
         non_isolated_nodes[nodeID] = nodes[nodeID]
@@ -136,9 +136,9 @@ function init_given_layout(){
     for(new_link of links_org){
         links.push(new_link)
     }
-}
+}*/
 
-/*function init_given_layout() {
+function init_given_layout() {
     const non_isolated_nodes = {};
 
     for (const nodeID in nodes) {
@@ -155,7 +155,7 @@ function init_given_layout(){
         non_isolated_nodes,
         links
     };
-}*/
+}
 
 /*const {
     non_isolated_nodes: nodes_main,
@@ -336,3 +336,23 @@ function next_edge() {
 
     update_new_link(non_isolated_nodes, links, new_link);
 }
+
+/*
+boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
+init_k_temp()
+init_nodes_links()
+get_bfs_links()
+next_edge()
+draw(non_isolated_nodes, links)
+step(non_isolated_nodes, links)
+
+
+boundaryPoints.push({ x:1360, y:-1000 }, { x:1360, y:1940 }, { x:-300, y:1940 }, { x:-300, y:-1000 });
+init_k_temp()
+const {
+    non_isolated_nodes: nodes_main,
+    links: links_main
+} = init_given_layout();
+draw(nodes_main, links_main)
+step(nodes_main, links_main)
+ */
