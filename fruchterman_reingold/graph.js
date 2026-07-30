@@ -337,6 +337,89 @@ function next_edge() {
     update_new_link(non_isolated_nodes, links, new_link);
 }
 
+function remove_link(nodes, links, removeSource, removeTarget) {
+    const nodeArray = Object.values(nodes);
+
+    const labelToId = Object.fromEntries(
+        nodeArray.map(node => [node.label, node.id])
+    );
+
+    const sourceId = labelToId[removeSource];
+    const targetId = labelToId[removeTarget];
+
+    return links.filter(link => !(
+        (link.source === sourceId && link.target === targetId) ||
+        (link.source === targetId && link.target === sourceId)
+    ));
+}
+
+function connected_components(adj_list) {
+    const visited = new Set();
+    const components = [];
+
+    for (const start in adj_list) {
+        if (visited.has(start)) continue;
+
+        const queue = [start];
+        visited.add(start);
+
+        const component = [];
+
+        while (queue.length > 0) {
+            const node = queue.shift();
+            component.push(Number(node)); // remove Number() if you want string IDs
+
+            for (const neighbor of adj_list[node]) {
+                const neighborStr = String(neighbor);
+
+                if (!visited.has(neighborStr)) {
+                    visited.add(neighborStr);
+                    queue.push(neighborStr);
+                }
+            }
+        }
+
+        components.push(component);
+    }
+
+    return components;
+}
+
+function get_partial_tree(nodes, links, removeSource, removeTarget) {
+    // Remove the specified edge
+    const new_links = remove_link(nodes, links, removeSource, removeTarget);
+
+    // Build adjacency list and find connected components
+    const adj_list = create_adj_list(nodes, new_links);
+    const components = connected_components(adj_list);
+
+    // Find the ID of removeTarget
+    const targetNode = Object.values(nodes).find(
+        node => node.label === removeTarget
+    );
+
+    if (!targetNode) {
+        return [];
+    }
+
+    const targetId = targetNode.id;
+
+    // Find the component containing removeTarget
+    const component = components.find(c => c.includes(targetId));
+
+    if (!component) {
+        return [];
+    }
+
+    const componentSet = new Set(component);
+
+    // Return only links entirely inside that component
+    return new_links.filter(link =>
+        componentSet.has(link.source) &&
+        componentSet.has(link.target)
+    );
+}
+
 /*
 boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
 init_k_temp()
@@ -355,4 +438,6 @@ const {
 } = init_given_layout();
 draw(nodes_main, links_main)
 step(nodes_main, links_main)
+partial_links = get_partial_tree(nodes_main, links_main, "molecular biolog", "microbiology")
+console.log(partial_links)
  */
