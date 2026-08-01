@@ -127,6 +127,116 @@ function init_nodes_links(){
     centerY = y
 }
 
+/*function init_nodes_links_partial(nodes_main, fix_nodes, partial_links) {
+    links = [];
+    next_node = -1;
+    next_ngbr = -1;
+
+    // Keep only fixed nodes in non_isolated_nodes
+    non_isolated_nodes = Object.fromEntries(
+        Object.entries(nodes_main).filter(([_, node]) => fix_nodes.has(node.id))
+    );
+
+    // Get remaining (non-fixed) nodes
+    const remaining_nodes = Object.values(nodes_main).filter(
+        node => !fix_nodes.has(node.id)
+    );
+
+    // Create adjacency list for remaining nodes using partial links
+    adj_list = create_adj_list(remaining_nodes, partial_links);
+
+    let [x, y] = getCenterBoundary(boundaryPoints);
+    centerX = x;
+    centerY = y;
+}*/
+
+/*function init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_links) {
+    links = [];
+    next_node = -1;
+    next_ngbr = -1;
+
+    // Keep only fixed nodes in non_isolated_nodes
+    non_isolated_nodes = Object.fromEntries(
+        Object.entries(nodes_main).filter(([_, node]) => fix_nodes.has(node.id))
+    );
+
+    // Get remaining (non-fixed) nodes
+    const remaining_nodes = Object.values(nodes_main).filter(
+        node => !fix_nodes.has(node.id)
+    );
+
+    // Create a Set of partial link keys for fast lookup
+    const partialLinkSet = new Set(
+        partial_links.map(link => `${link.source}-${link.target}`)
+    );
+
+    // Keep links_main links that are not in partial_links
+    links = links_main.filter(link => {
+        const key1 = `${link.source}-${link.target}`;
+        const key2 = `${link.target}-${link.source}`; // optional: treat links as undirected
+        return !partialLinkSet.has(key1) && !partialLinkSet.has(key2);
+    });
+
+    // Create adjacency list using remaining nodes and partial links
+    adj_list = create_adj_list(remaining_nodes, partial_links);
+
+    let [x, y] = getCenterBoundary(boundaryPoints);
+    centerX = x;
+    centerY = y;
+}*/
+
+function init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_links, removeSource, removeTarget) {
+    links = [];
+    next_node = -1;
+    next_ngbr = -1;
+
+    // Keep only fixed nodes in non_isolated_nodes
+    non_isolated_nodes = Object.fromEntries(
+        Object.entries(nodes_main).filter(([_, node]) => fix_nodes.has(node.id))
+    );
+
+    // Get remaining (non-fixed) nodes
+    const remaining_nodes = Object.values(nodes_main).filter(
+        node => !fix_nodes.has(node.id)
+    );
+
+    // Convert labels to IDs for the link to remove
+    const nodeArray = Object.values(nodes_main);
+
+    const labelToId = Object.fromEntries(
+        nodeArray.map(node => [node.label, node.id])
+    );
+
+    const removeSourceId = labelToId[removeSource];
+    const removeTargetId = labelToId[removeTarget];
+
+    // Create a Set of partial links for fast lookup
+    const partialLinkSet = new Set(
+        partial_links.map(link => `${link.source}-${link.target}`)
+    );
+
+    // Keep links_main links that are not in partial_links
+    // and are not the removed link
+    links = links_main.filter(link => {
+        const isPartialLink =
+            partialLinkSet.has(`${link.source}-${link.target}`) ||
+            partialLinkSet.has(`${link.target}-${link.source}`);
+
+        const isRemovedLink =
+            (link.source === removeSourceId && link.target === removeTargetId) ||
+            (link.source === removeTargetId && link.target === removeSourceId);
+
+        return !isPartialLink && !isRemovedLink;
+    });
+
+    // Create adjacency list using remaining nodes and partial links
+    adj_list = create_adj_list(remaining_nodes, partial_links);
+
+    let [x, y] = getCenterBoundary(boundaryPoints);
+    centerX = x;
+    centerY = y;
+}
+
 /*function init_given_layout(){
     non_isolated_nodes = {}
     for(nodeID in nodes){
@@ -420,6 +530,13 @@ function get_partial_tree(nodes, links, removeSource, removeTarget) {
     );
 }
 
+function getNodes(partial_links) {
+    let node_arr =  [...new Set(
+        partial_links.flatMap(link => [link.source, link.target])
+    )];
+    return new Set(node_arr);
+}
+
 /*
 boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
 init_k_temp()
@@ -437,7 +554,23 @@ const {
     links: links_main
 } = init_given_layout();
 draw(nodes_main, links_main)
-step(nodes_main, links_main)
-partial_links = get_partial_tree(nodes_main, links_main, "molecular biolog", "microbiology")
+//step(nodes_main, links_main)
+removeSource = "molecular biolog"
+removeTarget = "microbiology"
+partial_links = get_partial_tree(nodes_main, links_main, removeSource, removeTarget)
 console.log(partial_links)
+boundaryPointsOuter = boundaryPoints.map(p => ({ ...p }));
+boundaryPoints.length = 0;
+boundaryPoints.push({ x:400, y:700 }, { x:-157, y:0 }, { x:1400, y:273 });
+draw(nodes_main, links_main)
+non_fix_nodes = getNodes(partial_links)
+const nodesArray = Object.values(nodes_main);
+fix_nodes_objects = new Set(nodesArray.filter(node => !non_fix_nodes.has(node.id)));
+fix_nodes = new Set()
+for(let u of fix_nodes_objects){
+  fix_nodes.add(u.id)
+}
+console.log(fix_nodes)
+init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_links, removeSource, removeTarget)
+draw(non_isolated_nodes, links)
  */
