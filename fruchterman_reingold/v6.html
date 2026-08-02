@@ -564,7 +564,7 @@ function move_point_safe(fx, fy, v, temperature, boundaryPoints, non_isolated_no
     //console.log("line_segments", line_segments)
     //console.log("movement_segment", movement_segment)
     let intersecting_segment = findIntersectingSegment(line_segments, movement_segment)
-    //console.log(intersecting_segment)
+    console.log(intersecting_segment)
     let intersectingPoint = findIntersectingPoint(intersecting_segment, movement_segment)
     //if(intersecting_segment!=null)
     //  console.log(intersectingPoint)
@@ -585,7 +585,11 @@ function step(non_isolated_nodes, links, fix_nodes = new Set()) {
     //const v = nodes[i];
     const v = non_isolated_nodes[i];
 
-    if (fix_nodes.has(v.id))continue
+    if (fix_nodes.has(v.id)){
+      console.log("Fix node, continuing!")
+      continue
+    }
+    else console.log("Not fix node, computing forces!")
 
     let fx = 0;
     let fy = 0;
@@ -599,7 +603,11 @@ function step(non_isolated_nodes, links, fix_nodes = new Set()) {
       //const u = nodes[j];
       const u = non_isolated_nodes[j];
 
-      if (fix_nodes.has(u.id))continue
+      if (fix_nodes.has(u.id)){
+        console.log("Fix node, continuing!")
+        continue
+      }
+      else console.log("Not fix node, computing forces!")
 
       let dx = v.x - u.x;
       let dy = v.y - u.y;
@@ -628,7 +636,11 @@ function step(non_isolated_nodes, links, fix_nodes = new Set()) {
       else if (e.target == i) u = nodes[e.source];
       else continue;
 
-      if (fix_nodes.has(u.id))continue
+      /*if (fix_nodes.has(u.id)){
+        console.log("Fix node, continuing!")
+        continue
+      }
+      else console.log("Not fix node, computing forces!")*/
 
       let dx = v.x - u.x;
       let dy = v.y - u.y;

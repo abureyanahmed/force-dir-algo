@@ -63,6 +63,7 @@ function bfs_edges(adj_list) {
         while (queue.length > 0) {
             const u = queue.shift();
 
+            console.log("adj_list[u]", adj_list[u])
             for (const v of adj_list[u]) {
                 if (!visited.has(String(v))) {
                     visited.add(String(v));
@@ -196,8 +197,11 @@ function init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_lin
     );
 
     // Get remaining (non-fixed) nodes
-    const remaining_nodes = Object.values(nodes_main).filter(
+    /*const remaining_nodes = Object.values(nodes_main).filter(
         node => !fix_nodes.has(node.id)
+    );*/
+    remaining_nodes = Object.fromEntries(
+        Object.entries(nodes_main).filter(([_, node]) => !fix_nodes.has(node.id))
     );
 
     // Convert labels to IDs for the link to remove
@@ -227,9 +231,11 @@ function init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_lin
             (link.source === removeTargetId && link.target === removeSourceId);
 
         return !isPartialLink && !isRemovedLink;
+        //return !isPartialLink;
     });
 
     // Create adjacency list using remaining nodes and partial links
+    console.log("remaining_nodes", remaining_nodes)
     adj_list = create_adj_list(remaining_nodes, partial_links);
 
     let [x, y] = getCenterBoundary(boundaryPoints);
@@ -573,4 +579,22 @@ for(let u of fix_nodes_objects){
 console.log(fix_nodes)
 init_nodes_links_partial(nodes_main, links_main, fix_nodes, partial_links, removeSource, removeTarget)
 draw(non_isolated_nodes, links)
+//step(non_isolated_nodes, links, fix_nodes)
+
+get_bfs_links()
+
+let nodeArray = Object.values(nodes_main);
+let labelToId = Object.fromEntries(
+    nodeArray.map(node => [node.label, node.id])
+);
+let removeTargetId = labelToId[removeTarget];
+fix_nodes.add(removeTargetId)
+non_isolated_nodes[removeTargetId] = nodes_main[removeTargetId]
+let removeSourceId = labelToId[removeSource];
+links.push({source: removeSourceId, target: removeTargetId})
+draw(non_isolated_nodes, links)
+
+next_edge()
+draw(non_isolated_nodes, links)
+step(non_isolated_nodes, links, fix_nodes)
  */
