@@ -603,11 +603,11 @@ function step(non_isolated_nodes, links, fix_nodes = new Set()) {
       //const u = nodes[j];
       const u = non_isolated_nodes[j];
 
-      if (fix_nodes.has(u.id)){
+      /*if (fix_nodes.has(u.id)){
         console.log("Fix node, continuing!")
         continue
       }
-      else console.log("Not fix node, computing forces!")
+      else console.log("Not fix node, computing forces!")*/
 
       let dx = v.x - u.x;
       let dy = v.y - u.y;
