@@ -543,6 +543,66 @@ function getNodes(partial_links) {
     return new Set(node_arr);
 }
 
+function add_nodes_on_boundary(
+    boundaryPoints,
+    non_isolated_nodes,
+    fix_nodes,
+    spacing = 100
+) {
+    if (!boundaryPoints || boundaryPoints.length < 2) {
+        return;
+    }
+
+    // Find the next available node id
+    let nextId = Math.max(
+        ...Object.keys(non_isolated_nodes).map(Number),
+        -1
+    ) + 1;
+
+    // Compute edge lengths
+    const edges = [];
+    let perimeter = 0;
+
+    for (let i = 0; i < boundaryPoints.length; i++) {
+        const p1 = boundaryPoints[i];
+        const p2 = boundaryPoints[(i + 1) % boundaryPoints.length];
+
+        const length = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+        edges.push({ p1, p2, length });
+        perimeter += length;
+    }
+
+    // Add equally spaced points
+    for (let dist = 0; dist < perimeter; dist += spacing) {
+        let remaining = dist;
+
+        for (const edge of edges) {
+            if (remaining <= edge.length) {
+                const t = edge.length === 0 ? 0 : remaining / edge.length;
+
+                const x = edge.p1.x + t * (edge.p2.x - edge.p1.x);
+                const y = edge.p1.y + t * (edge.p2.y - edge.p1.y);
+
+                non_isolated_nodes[nextId] = {
+                    id: nextId,
+                    x,
+                    y,
+                    //label: `boundary point ${nextId}`
+                    label: ''
+                };
+
+                fix_nodes.add(nextId);
+
+                nextId++;
+                break;
+            }
+
+            remaining -= edge.length;
+        }
+    }
+}
+
 /*
 boundaryPoints.push({ x:10, y:15 }, { x:50, y:15 }, { x:50, y:60 }, { x:10, y:60 });
 init_k_temp()
@@ -597,4 +657,6 @@ draw(non_isolated_nodes, links)
 next_edge()
 draw(non_isolated_nodes, links)
 step(non_isolated_nodes, links, fix_nodes)
+
+add_nodes_on_boundary(boundaryPoints, non_isolated_nodes, fix_nodes, 10);
  */
