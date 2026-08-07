@@ -620,6 +620,9 @@ const {
     links: links_main
 } = init_given_layout();
 draw(nodes_main, links_main)
+console.log("Area:", computeBB(nodes_main))
+//Area: 4524086.097392766
+
 //step(nodes_main, links_main)
 removeSource = "molecular biolog"
 removeTarget = "microbiology"
@@ -658,5 +661,10 @@ next_edge()
 draw(non_isolated_nodes, links)
 step(non_isolated_nodes, links, fix_nodes)
 
-add_nodes_on_boundary(boundaryPoints, non_isolated_nodes, fix_nodes, 10);
+console.log("Area:", computeBB(non_isolated_nodes))
+//Area: 1620972.755279707
+// after collision
+//Area: 1395289.2175784938
+
+//add_nodes_on_boundary(boundaryPoints, non_isolated_nodes, fix_nodes, 10);
  */

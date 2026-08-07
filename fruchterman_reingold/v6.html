@@ -249,10 +249,33 @@ function attractiveForce(d) {
   return attractiveStrength * (d * d) / k;
 }
 
+
+collisionStrength = 2.0;   // tune this
+collisionRadius = 10
+
 //const centerStrength = 0.01;
 const centerStrength = 0.1;
 function centerForce(distanceToCenter) {
   return centerStrength * distanceToCenter;
+}
+
+function computeBB(nodes, fix_nodes = new Set()) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of Object.values(nodes)) {
+
+        if (fix_nodes.has(node.id))continue
+
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x);
+        maxY = Math.max(maxY, node.y);
+    }
+    
+    return (maxX-minX)*(maxY-minY)
 }
 
 function computeCenter(nodes, fix_nodes = new Set()) {
@@ -678,6 +701,34 @@ function step(non_isolated_nodes, links, fix_nodes = new Set()) {
 
     fx += cur_fx;
     fy += cur_fy;
+
+    // Collision force
+    for (let j in non_isolated_nodes) {
+      if (i === j) continue;
+
+      const u = non_isolated_nodes[j];
+
+      let dx = v.x - u.x;
+      let dy = v.y - u.y;
+      let dist = Math.hypot(dx, dy) || 0.01;
+
+      // If nodes don't have individual radii, use a constant.
+      const r1 = v.r ?? collisionRadius;
+      const r2 = u.r ?? collisionRadius;
+
+      const minDist = r1 + r2;
+
+      if (dist < minDist) {
+        // overlap amount
+        const overlap = minDist - dist;
+
+        dx /= dist;
+        dy /= dist;
+
+        fx += dx * overlap * collisionStrength;
+        fy += dy * overlap * collisionStrength;
+      }
+    }
 
     // find new point, update if not going outside
     /*const disp = Math.hypot(fx, fy) || 0.01;
